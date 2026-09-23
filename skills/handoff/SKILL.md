@@ -1,3 +1,8 @@
+---
+name: handoff
+description: Create or consume a repository handoff so another AI model, agent, session, host, or machine can continue the work with project context, recent Git history, decisions, dead ends, current state, and next steps.
+---
+
 # Handoff
 
 Use this skill when handing a repository from one AI model, agent, session, host, or machine to another.
