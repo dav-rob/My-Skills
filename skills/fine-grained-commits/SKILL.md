@@ -1,13 +1,13 @@
 ---
 name: fine-grained-commits
-description: Organize Git work into coherent, browsable commits with clear intent and safe staging. Use whenever planning, staging, creating, amending, or reviewing commits, or when a task asks an agent to commit or save repository work.
+description: Organize and regularly push Git work as coherent, browsable commits with clear intent and safe staging. Use whenever planning, staging, creating, amending, pushing, or reviewing commits, or when a task asks an agent to commit or save repository work.
 ---
 
 # Fine-grained Commits
 
 Create history that lets a future reader understand the pieces of work without reconstructing the entire session.
 
-This skill governs commit organization. It does not grant permission to commit, amend, rebase, push, or include unrelated changes.
+This skill governs commit organization and delivery. When a user authorizes creating commits, treat that as authorization to push those new commits promptly to the current branch's existing upstream unless the user explicitly requests local-only commits. It does not grant permission to amend, rebase, force-push, or include unrelated changes.
 
 ## Choose commit boundaries
 
@@ -38,13 +38,18 @@ For each commit:
 2. Review `git diff --cached --stat` and `git diff --cached` before committing.
 3. Run the most relevant verification for that unit, or clearly report why it was not run.
 4. Write an outcome-focused imperative subject. Add a body only when it preserves rationale, constraints, or migration details that are not apparent from the diff.
-5. Commit, then repeat for the next unit.
+5. Commit the unit.
+6. Push the verified commit to the current branch's configured upstream immediately, then continue with the next unit. Regular pushes are part of the workflow so progress remains visible remotely.
 
-Afterwards, inspect the resulting log and working tree. Report the commits created and any intentionally uncommitted changes.
+Afterwards, inspect the resulting log, upstream tracking state, and working tree. Report the commits created and pushed, plus any intentionally uncommitted changes.
 
 ## History safety
 
 - Do not amend, squash, reorder, or otherwise rewrite existing history unless the user explicitly asks.
-- Do not push merely because commits were requested.
+- Never force-push as part of this workflow.
+- Before pushing, inspect the commits ahead of the upstream. Do not accidentally publish unrelated pre-existing local commits; stop and report when the push scope is ambiguous.
+- If the branch has no upstream and the intended remote and branch are unambiguous, establish it with a normal `git push -u`. Otherwise stop and ask for the missing destination.
+- If a push is rejected or authentication/network access fails, do not rewrite history or repeatedly retry. Preserve the local commit and report the failure.
+- An explicit user instruction not to push, to keep commits local, or to wait before pushing overrides the regular-push default.
 - Do not stage secrets, caches, temporary files, test residue, or ignored artifacts.
 - If a clean separation would require risky surgery or would make an intermediate commit invalid, prefer the coherent larger commit and explain the tradeoff.
