@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fine-grained Commits"
+  short_description: "Create coherent, browsable Git history"
+  default_prompt: "Use $fine-grained-commits to organize and commit the current work as coherent, reviewable units."
+policy:
+  allow_implicit_invocation: true
