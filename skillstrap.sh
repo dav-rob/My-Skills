@@ -96,7 +96,7 @@ EOF_PATH
 clone_repo() {
   repo="$1"
   dest="$2"
-  gh repo clone "$repo" "$dest" -- --depth 1 >/dev/null
+  gh repo clone "$repo" "$dest" -- --depth 1 >/dev/null 2>&1
 }
 
 find_skill_dir() {
@@ -122,16 +122,46 @@ find_skill_dir() {
   done
 }
 
+list_checked_files() {
+  root="$1"
+
+  find "$root" -type f -not -path '*/.git/*' -print | while IFS= read -r file; do
+    rel="${file#"$root"/}"
+    say "  $rel"
+  done
+}
+
+append_validation_reasons() {
+  log="$1"
+  reasons="$2"
+
+  matches="$(grep -Ei '(error|invalid|failed|failure|required|missing)' "$log" 2>/dev/null | sed -n '1,5p' || true)"
+  if [ -z "$matches" ]; then
+    matches="$(sed -n '1,5p' "$log")"
+  fi
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    printf '%s\n' "validator: $line" >> "$reasons"
+  done <<EOF_VALIDATION
+$matches
+EOF_VALIDATION
+}
+
 scan_dir() {
   root="$1"
+  reasons="$2"
   findings=0
-
-  say "Static safety scan: $root"
 
   symlinks="$(find "$root" -type l -not -path '*/.git/*' -print 2>/dev/null || true)"
   if [ -n "$symlinks" ]; then
-    say "[review] symbolic links found:"
-    printf '%s\n' "$symlinks"
+    while IFS= read -r link; do
+      [ -n "$link" ] || continue
+      rel="${link#"$root"/}"
+      printf '%s\n' "symbolic link: $rel" >> "$reasons"
+    done <<EOF_SYMLINKS
+$symlinks
+EOF_SYMLINKS
     findings=1
   fi
 
@@ -142,65 +172,119 @@ scan_dir() {
     size="$(wc -c < "$file" | tr -d ' ')"
     [ "$size" -le 1048576 ] || continue
 
-    matches="$(grep -nEi "$pattern" "$file" 2>/dev/null || true)"
-    if [ -n "$matches" ]; then
-      say "[review] $file"
-      printf '%s\n' "$matches"
+    first_match="$(grep -nEi "$pattern" "$file" 2>/dev/null | sed -n '1p' || true)"
+    if [ -n "$first_match" ]; then
+      line="${first_match%%:*}"
+      rel="${file#"$root"/}"
+      printf '%s\n' "suspicious pattern: $rel:$line" >> "$reasons"
       findings=1
     fi
   done <<EOF_FILES
 $(find "$root" -type f -not -path '*/.git/*' -print)
 EOF_FILES
 
-  if [ "$findings" -ne 0 ]; then
-    say "Safety scan: REVIEW REQUIRED"
-    return 2
-  fi
-
-  say "Safety scan: no flagged patterns"
-  return 0
+  [ "$findings" -eq 0 ]
 }
 
 scan_all_skills() {
   root="$1"
+  reasons="$2"
   skill_files="$(find "$root" -type f -name SKILL.md -not -path '*/.git/*' -print)"
-  [ -n "$skill_files" ] || fail "no SKILL.md files found"
+  [ -n "$skill_files" ] || {
+    printf '%s\n' "no SKILL.md files found" >> "$reasons"
+    return 1
+  }
 
   rc=0
   while IFS= read -r skill_file; do
-    scan_dir "$(dirname "$skill_file")" || rc=$?
+    scan_dir "$(dirname "$skill_file")" "$reasons" || rc=1
   done <<EOF_SKILLS
 $skill_files
 EOF_SKILLS
   return "$rc"
 }
 
+list_all_skill_files() {
+  root="$1"
+  skill_files="$(find "$root" -type f -name SKILL.md -not -path '*/.git/*' -print)"
+
+  while IFS= read -r skill_file; do
+    [ -n "$skill_file" ] || continue
+    skill_dir="$(dirname "$skill_file")"
+    skill_name="$(basename "$skill_dir")"
+    say "  [$skill_name]"
+    find "$skill_dir" -type f -not -path '*/.git/*' -print | while IFS= read -r file; do
+      rel="${file#"$skill_dir"/}"
+      say "    $rel"
+    done
+  done <<EOF_SKILLS
+$skill_files
+EOF_SKILLS
+}
+
 validate_repo_or_skill() {
   clone="$1"
   skill="${2:-}"
+  reasons="$3"
+  rc=0
+  validation_log="$(mktemp "${TMPDIR:-/tmp}/skillstrap-validation.XXXXXX")"
 
   if [ -z "$skill" ] || [ "$skill" = "--all" ]; then
-    say "Agent Skills validation: repository"
-    gh skill publish "$clone" --dry-run
-    scan_all_skills "$clone"
-    return $?
+    say "Files checked:"
+    list_all_skill_files "$clone"
+
+    if gh skill publish "$clone" --dry-run >"$validation_log" 2>&1; then
+      say "  PASS  Agent Skills format"
+    else
+      say "  FAIL  Agent Skills format"
+      append_validation_reasons "$validation_log" "$reasons"
+      rc=1
+    fi
+
+    if scan_all_skills "$clone" "$reasons"; then
+      say "  PASS  static safety scan"
+    else
+      say "  FAIL  static safety scan"
+      rc=1
+    fi
+
+    rm -f "$validation_log"
+    return "$rc"
   fi
 
   skill_dir="$(find_skill_dir "$clone" "$skill")"
-  [ -n "$skill_dir" ] || fail "skill '$skill' not found in cloned repository"
+  if [ -z "$skill_dir" ]; then
+    printf '%s\n' "skill '$skill' not found in repository" >> "$reasons"
+    say "  FAIL  locate skill"
+    rm -f "$validation_log"
+    return 1
+  fi
+
+  say "Files checked:"
+  list_checked_files "$skill_dir"
 
   tmp_validate="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-validate.XXXXXX")"
   mkdir -p "$tmp_validate/skills/$skill"
   cp -R "$skill_dir"/. "$tmp_validate/skills/$skill"/
 
-  say "Agent Skills validation: $skill"
-  if ! gh skill publish "$tmp_validate" --dry-run; then
-    rm -rf "$tmp_validate"
-    return 1
+  if gh skill publish "$tmp_validate" --dry-run >"$validation_log" 2>&1; then
+    say "  PASS  Agent Skills format"
+  else
+    say "  FAIL  Agent Skills format"
+    append_validation_reasons "$validation_log" "$reasons"
+    rc=1
   fi
-  rm -rf "$tmp_validate"
 
-  scan_dir "$skill_dir"
+  if scan_dir "$skill_dir" "$reasons"; then
+    say "  PASS  static safety scan"
+  else
+    say "  FAIL  static safety scan"
+    rc=1
+  fi
+
+  rm -rf "$tmp_validate"
+  rm -f "$validation_log"
+  return "$rc"
 }
 
 audit() {
@@ -208,23 +292,35 @@ audit() {
   skill="${2:-}"
 
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-repo.XXXXXX")"
-  trap 'rm -rf "$tmp"' EXIT HUP INT TERM
-
-  say "Fetching $repo"
-  clone_repo "$repo" "$tmp/repo"
-
-  rc=0
-  validate_repo_or_skill "$tmp/repo" "$skill" || rc=$?
+  reasons="$(mktemp "${TMPDIR:-/tmp}/skillstrap-reasons.XXXXXX")"
+  trap 'rm -rf "$tmp"; rm -f "$reasons"' EXIT HUP INT TERM
 
   if [ -n "$skill" ] && [ "$skill" != "--all" ]; then
-    say "Preview: $repo / $skill"
-    GH_PROMPT_DISABLED=1 GH_PAGER=cat gh skill preview "$repo" "$skill" || rc=$?
+    say "Audit: $repo / $skill"
   else
-    say "Available skills: $repo"
-    GH_PROMPT_DISABLED=1 gh skill install "$repo" | sed -n '1,80p' || true
+    say "Audit: $repo / all skills"
+  fi
+
+  if ! clone_repo "$repo" "$tmp/repo"; then
+    printf '%s\n' "could not fetch repository" >> "$reasons"
+    rc=1
+  else
+    rc=0
+    validate_repo_or_skill "$tmp/repo" "$skill" "$reasons" || rc=$?
+  fi
+
+  say ""
+  if [ "$rc" -eq 0 ]; then
+    say "Audit result: PASS"
+    say "  No flagged patterns found."
+  else
+    say "Audit result: FAIL"
+    say "Reasons:"
+    sed 's/^/  - /' "$reasons"
   fi
 
   rm -rf "$tmp"
+  rm -f "$reasons"
   trap - EXIT HUP INT TERM
   return "$rc"
 }
@@ -316,7 +412,12 @@ case "${1:-}" in
     [ "$#" -ge 2 ] && [ "$#" -le 3 ] || fail "usage: skillstrap.sh --dry-run <owner/repo> [skill|--all]"
     check_gh_skill
     ensure_gh_auth
-    audit "$2" "${3:-}"
+    if audit "$2" "${3:-}"; then
+      say "Dry run only: nothing installed."
+    else
+      say "Dry run only: nothing installed."
+      exit 1
+    fi
     ;;
   install)
     [ "$#" -eq 3 ] || fail "usage: skillstrap.sh install <owner/repo> <skill|--all>"
