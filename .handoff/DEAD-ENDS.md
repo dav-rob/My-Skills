@@ -21,3 +21,13 @@ What was tried: Quietly skipping files over 1 MiB during the audit.
 Why: Keep scans inexpensive.
 What happened: Oversized suspicious files could receive PASS without being scanned.
 Conclusion: Reject oversized files explicitly.
+
+What was tried: Treating `gh --agent antigravity` installation as sufficient for
+Antigravity 2.0.
+Why: The target name appeared to cover Antigravity generally.
+What happened: Skills existed under `.gemini/antigravity/skills` but were absent
+from the app. Installing with `antigravity2.0` into `.gemini/config/skills` made
+exact-address appear as Global in Settings → Customizations.
+Conclusion: Use the surface-specific target and verify app discovery. The old
+slash-command picker initially remained stale even after installation; the
+Customizations screen showed the newly loaded skill.

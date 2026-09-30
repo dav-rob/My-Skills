@@ -1,7 +1,7 @@
 # Vision
 
 Distribute personal Agent Skills from `dav-rob/My-Skills` across machines and
-OpenCode, Codex, Claude Code, Cursor, Antigravity and Antigravity CLI.
+OpenCode, Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI.
 
 Keep `skillstrap.sh` a small, dependable shell wrapper over GitHub CLI.
 Installation is explicit; bootstrap installs the command alone. Audits are

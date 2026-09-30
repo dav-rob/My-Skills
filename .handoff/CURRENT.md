@@ -1,10 +1,15 @@
 # Current
 
-The requested CLI reliability checks and fixes are complete on `main`.
-All 24 offline regression tests pass under `/bin/sh` and `/bin/dash`.
-Live bootstrap, dry runs, named/bulk installs and legacy-name removal passed in
-temporary homes with GitHub CLI 2.101.0. No known blockers.
+Antigravity 2.0 support is complete on `main`: seven install targets, including
+`antigravity2.0`, and uninstall support for `.gemini/config/skills`.
 
-Future changes should preserve explicit selection, concise audits, pinned
-installation and conservative uninstall. A semantic auditor is a possible later
-feature; no such implementation has been requested.
+All 24 offline tests pass under sh and dash, including seven-target named/bulk
+installation and exact-name removal across the seven directories.
+
+The user's installed command was updated from GitHub and used to install
+exact-address for all seven targets. Antigravity 2.18.1 visibly lists it as Global
+in Settings → Customizations. The legacy linker has been removed.
+
+No outstanding requested work. Preserve explicit selection, compact audits,
+pinned installs and conservative uninstall. Future app support should verify
+actual app discovery as well as CLI placement.

@@ -20,8 +20,15 @@ Reason: String-prefix checks allow traversal and symlink escapes.
 Alternatives considered: Removing any reported path containing `/skills/`.
 Consequences: Custom/unknown directories are refused; leaf symlinks can be unlinked.
 
-Decision: Keep the legacy linker.
-Reason: It also creates a separate Gemini plugin; absence of repository callers
-cannot establish that manual compatibility use has ended.
-Alternatives considered: Deleting it as apparently obsolete.
-Consequences: README marks it as manual legacy compatibility, outside skillstrap.
+Decision: Include `antigravity2.0` alongside the older Antigravity and CLI targets.
+Reason: gh maps Antigravity 2.0 to `.gemini/config/skills`, while the older target
+uses `.gemini/antigravity/skills`. Installation success alone does not prove app discovery.
+Alternatives considered: Packaging skills as a plugin; dropping the older target.
+Consequences: Seven install targets; uninstall also recognises `.gemini/config/skills`.
+
+Decision: Retire the legacy linker after verifying native app discovery.
+Reason: Antigravity 2.18.1 lists the installed exact-address skill as Global in
+Settings → Customizations. The user agreed to retire the duplicate install route.
+Alternatives considered: Keeping checkout symlinks and a plugin bundle.
+Consequences: `skills/link-skills.sh` is removed; existing user links/plugins are
+not deleted. Future skills use explicit audited skillstrap installs.
