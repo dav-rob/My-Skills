@@ -21,16 +21,19 @@ usage() {
   cat <<'USAGE'
 Usage:
   skillstrap.sh
-  skillstrap.sh --dry-run <owner/repo> [skill]
-  skillstrap.sh install <owner/repo> [skill]
+  skillstrap.sh --dry-run <owner/repo> [skill|--all]
+  skillstrap.sh install <owner/repo> <skill|--all>
+  skillstrap.sh uninstall <skill>
   skillstrap.sh list
   skillstrap.sh help
 
-No arguments installs dav-rob/My-Skills for OpenCode, Codex, Claude Code,
-Cursor, Antigravity and Antigravity CLI at user scope.
+No arguments installs/updates only the skillstrap.sh command itself and ensures
+~/.local/bin is on PATH. It never installs skills implicitly.
 
---dry-run clones and statically audits a skill without installing it.
-install performs the same audit and only installs when the audit passes.
+--dry-run audits without installing.
+install audits first, then installs the named skill (or --all) for OpenCode,
+Codex, Claude Code, Cursor, Antigravity and Antigravity CLI at user scope.
+uninstall removes every user-scope installation with that exact skill name.
 USAGE
 }
 
@@ -77,18 +80,17 @@ EOF_PATH
     *":$BIN_DIR:"*) : ;;
     *) PATH="$BIN_DIR:$PATH"; export PATH ;;
   esac
-}
 
-cleanup_legacy_symlinks() {
-  old1="$HOME/.agents/skills/exact address"
-  old2="$HOME/.gemini/config/plugins/My-Skills/skills/exact address"
-
-  for old in "$old1" "$old2"; do
-    if [ -L "$old" ]; then
-      say "Removing legacy symlink: $old"
-      rm "$old"
-    fi
-  done
+  say "Installed skillstrap.sh -> $BIN_PATH"
+  say "No skills were installed."
+  say ""
+  say "Open a new shell, or run:"
+  say "  source ~/.zshrc"
+  say ""
+  say "Examples:"
+  say "  skillstrap.sh --dry-run $REPO_DEFAULT"
+  say "  skillstrap.sh install $REPO_DEFAULT exact-address"
+  say "  skillstrap.sh install $REPO_DEFAULT --all"
 }
 
 clone_repo() {
@@ -137,7 +139,6 @@ scan_dir() {
 
   while IFS= read -r file; do
     [ -f "$file" ] || continue
-    # Skip very large files; skill instructions/scripts should be small text files.
     size="$(wc -c < "$file" | tr -d ' ')"
     [ "$size" -le 1048576 ] || continue
 
@@ -178,7 +179,7 @@ validate_repo_or_skill() {
   clone="$1"
   skill="${2:-}"
 
-  if [ -z "$skill" ]; then
+  if [ -z "$skill" ] || [ "$skill" = "--all" ]; then
     say "Agent Skills validation: repository"
     gh skill publish "$clone" --dry-run
     scan_all_skills "$clone"
@@ -215,7 +216,7 @@ audit() {
   rc=0
   validate_repo_or_skill "$tmp/repo" "$skill" || rc=$?
 
-  if [ -n "$skill" ]; then
+  if [ -n "$skill" ] && [ "$skill" != "--all" ]; then
     say "Preview: $repo / $skill"
     GH_PROMPT_DISABLED=1 GH_PAGER=cat gh skill preview "$repo" "$skill" || rc=$?
   else
@@ -230,57 +231,106 @@ audit() {
 
 install_for_agents() {
   repo="$1"
-  skill="${2:-}"
+  skill="$2"
 
   for agent in $AGENTS; do
     say "Installing for $agent"
-    if [ -n "$skill" ]; then
-      gh skill install "$repo" "$skill" --agent "$agent" --scope user --force
-    else
+    if [ "$skill" = "--all" ]; then
       gh skill install "$repo" --all --agent "$agent" --scope user --force
+    else
+      gh skill install "$repo" "$skill" --agent "$agent" --scope user --force
     fi
   done
 }
 
-install_default() {
-  check_gh_skill
-  ensure_gh_auth
-  install_self
-  cleanup_legacy_symlinks
+safe_user_skill_path() {
+  skill="$1"
+  path="$2"
 
-  say "Auditing $REPO_DEFAULT"
-  if ! audit "$REPO_DEFAULT"; then
-    fail "audit failed; skills were not installed"
+  case "$path" in
+    "$HOME"/*) abs="$path" ;;
+    "~/"*) abs="$HOME/${path#~/}" ;;
+    /*) return 1 ;;
+    *) abs="$HOME/${path#./}" ;;
+  esac
+
+  [ "$(basename "$abs")" = "$skill" ] || return 1
+  case "$abs" in
+    "$HOME"/*/skills/*) printf '%s\n' "$abs" ;;
+    *) return 1 ;;
+  esac
+}
+
+uninstall_skill() {
+  skill="$1"
+  check_gh_skill
+
+  rows="$(mktemp "${TMPDIR:-/tmp}/skillstrap-list.XXXXXX")"
+  seen="$(mktemp "${TMPDIR:-/tmp}/skillstrap-seen.XXXXXX")"
+  trap 'rm -f "$rows" "$seen"' EXIT HUP INT TERM
+
+  gh skill list --scope user \
+    --json skillName,path,sourceURL \
+    --template '{{range .}}{{printf "%s\t%s\t%s\n" .skillName .path .sourceURL}}{{end}}' \
+    > "$rows"
+
+  found=0
+  while IFS="$(printf '\t')" read -r name path source; do
+    [ "$name" = "$skill" ] || continue
+
+    abs="$(safe_user_skill_path "$skill" "$path" || true)"
+    [ -n "$abs" ] || fail "refusing unsafe uninstall path reported by gh: $path"
+
+    if grep -Fqx "$abs" "$seen" 2>/dev/null; then
+      continue
+    fi
+    printf '%s\n' "$abs" >> "$seen"
+
+    say "Removing $skill"
+    say "  $abs"
+    [ -n "$source" ] && say "  source: $source"
+
+    if [ -L "$abs" ] || [ -f "$abs" ]; then
+      rm -f "$abs"
+    elif [ -d "$abs" ]; then
+      rm -rf "$abs"
+    fi
+    found=1
+  done < "$rows"
+
+  rm -f "$rows" "$seen"
+  trap - EXIT HUP INT TERM
+
+  if [ "$found" -eq 0 ]; then
+    fail "no user-scope skill named '$skill' is installed"
   fi
 
-  install_for_agents "$REPO_DEFAULT"
-  say ""
-  say "Installed. Open a new shell, or run:"
-  say "  source ~/.zshrc"
-  say ""
-  say "Then verify with:"
-  say "  skillstrap.sh list"
+  say "Uninstalled '$skill'."
 }
 
 case "${1:-}" in
   "")
-    install_default
+    install_self
     ;;
   --dry-run)
-    [ "$#" -ge 2 ] || fail "usage: skillstrap.sh --dry-run <owner/repo> [skill]"
+    [ "$#" -ge 2 ] && [ "$#" -le 3 ] || fail "usage: skillstrap.sh --dry-run <owner/repo> [skill|--all]"
     check_gh_skill
     ensure_gh_auth
     audit "$2" "${3:-}"
     ;;
   install)
-    [ "$#" -ge 2 ] || fail "usage: skillstrap.sh install <owner/repo> [skill]"
+    [ "$#" -eq 3 ] || fail "usage: skillstrap.sh install <owner/repo> <skill|--all>"
     check_gh_skill
     ensure_gh_auth
-    if audit "$2" "${3:-}"; then
-      install_for_agents "$2" "${3:-}"
+    if audit "$2" "$3"; then
+      install_for_agents "$2" "$3"
     else
       fail "audit failed; nothing was installed"
     fi
+    ;;
+  uninstall)
+    [ "$#" -eq 2 ] || fail "usage: skillstrap.sh uninstall <skill>"
+    uninstall_skill "$2"
     ;;
   list)
     check_gh_skill
