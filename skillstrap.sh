@@ -7,6 +7,9 @@ BIN_DIR="$HOME/.local/bin"
 BIN_PATH="$BIN_DIR/skillstrap.sh"
 ZSHRC="$HOME/.zshrc"
 AGENTS="opencode codex claude-code cursor antigravity antigravity-cli"
+GH_PROMPT_DISABLED=1
+GH_PAGER=cat
+export GH_PROMPT_DISABLED GH_PAGER
 
 say() {
   printf '%s\n' "$*"
@@ -96,13 +99,13 @@ EOF_PATH
   say "  skillstrap.sh install $REPO_DEFAULT --all"
 )
 
-clone_repo() {
+clone_repo() (
   repo="$1"
   dest="$2"
   gh repo clone "$repo" "$dest" -- --depth 1 >/dev/null 2>&1
-}
+)
 
-find_skill_dir() {
+find_skill_dir() (
   root="$1"
   wanted="$2"
 
@@ -120,43 +123,63 @@ find_skill_dir() {
     ' "$f")"
     if [ "$name" = "$wanted" ]; then
       dirname "$f"
-      exit 0
     fi
   done
-}
+)
 
-list_checked_files() {
+list_checked_files() (
   root="$1"
 
-  find "$root" -type f -not -path '*/.git/*' -print | while IFS= read -r file; do
+  find "$root" -type f -print | LC_ALL=C sort | while IFS= read -r file; do
     rel="${file#"$root"/}"
     say "  $rel"
   done
-}
+)
 
 append_validation_reasons() {
-  log="$1"
-  reasons="$2"
-
-  matches="$(grep -Ei '(error|invalid|failed|failure|required|missing)' "$log" 2>/dev/null | sed -n '1,5p' || true)"
-  if [ -z "$matches" ]; then
-    matches="$(sed -n '1,5p' "$log")"
-  fi
-
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    printf '%s\n' "validator: $line" >> "$reasons"
-  done <<EOF_VALIDATION
-$matches
-EOF_VALIDATION
+  # Validator diagnostics may echo untrusted frontmatter. Keep them private.
+  printf '%s\n' "Agent Skills validation failed (check SKILL.md name, directory and required frontmatter)" >> "$2"
 }
 
-scan_dir() {
+check_audit_args() {
+  case "$1" in
+    */*) : ;;
+    *) fail "repository must be owner/repo" ;;
+  esac
+  owner="${1%%/*}"
+  repository="${1#*/}"
+  case "$owner/$repository" in
+    *[!a-zA-Z0-9_./-]*|/*|*/|*/*/*|-*|*/-*) fail "repository must be owner/repo" ;;
+  esac
+  case "$2" in
+    ""|--all) return 0 ;;
+    *[!a-z0-9-]*|-*|*-|*--*) fail "skill must be a plain Agent Skills name or --all" ;;
+  esac
+  [ "${#2}" -le 64 ] || fail "skill name is too long"
+}
+
+check_filenames() (
+  # Newlines break line-based inventories; controls can spoof terminal output.
+  invalid="$(find "$1" -path "$1/.git" -prune -o -exec sh -c '
+    for file do
+      case "$file" in
+        *"
+"*) printf "invalid\n"; continue ;;
+      esac
+      if printf "%s" "$file" | LC_ALL=C grep -q "[[:cntrl:]]"; then
+        printf "invalid\n"
+      fi
+    done
+  ' sh {} +)" || return 1
+  [ -z "$invalid" ]
+)
+
+scan_dir() (
   root="$1"
   reasons="$2"
   findings=0
 
-  symlinks="$(find "$root" -type l -not -path '*/.git/*' -print 2>/dev/null || true)"
+  symlinks="$(find "$root" -type l -print)" || return 1
   if [ -n "$symlinks" ]; then
     while IFS= read -r link; do
       [ -n "$link" ] || continue
@@ -168,14 +191,27 @@ EOF_SYMLINKS
     findings=1
   fi
 
-  pattern='(curl|wget).*[|][[:space:]]*(sh|bash|zsh|python([0-9.]+)?|perl|ruby)|(^|[[:space:]])(sudo|doas)[[:space:]]|rm[[:space:]]+-[^[:space:]]*r[^[:space:]]*f[[:space:]]+(/|~|\$HOME)|(^|[/[:space:]"'\''`])\.(ssh|aws|gnupg)([/[:space:]"'\''`]|$)|security[[:space:]]+find-(generic|internet)-password|(^|[[:space:]])(printenv|env)[[:space:]]*([|>]|$)|base64[[:space:]]+(-d|--decode)|(^|[[:space:]])eval[[:space:]]|(^|[[:space:]])crontab[[:space:]]|LaunchAgents|LaunchDaemons|\.ssh/authorized_keys|\.zshrc|\.bashrc|\.profile'
+  pattern='(curl|wget).*[|][[:space:]]*(sh|bash|zsh|python([0-9.]+)?|perl|ruby)|(^|[[:space:]])(sudo|doas)[[:space:]]|rm[[:space:]]+(-[^[:space:]]+[[:space:]]+)+["'\'']*(/|~|\$HOME|\$\{HOME\})|(^|[/[:space:]"'\''`])\.(ssh|aws|gnupg)([/[:space:]"'\''`]|$)|security[[:space:]]+find-(generic|internet)-password|(^|[[:space:]])(printenv|env)[[:space:]]*([|>]|$)|base64[[:space:]]+(-d|-D|--decode)|(^|[[:space:]])eval[[:space:]]|(^|[[:space:]])crontab[[:space:]]|LaunchAgents|LaunchDaemons|\.ssh/authorized_keys|\.zshrc|\.bashrc|\.profile'
 
   while IFS= read -r file; do
     [ -f "$file" ] || continue
-    size="$(wc -c < "$file" | tr -d ' ')"
-    [ "$size" -le 1048576 ] || continue
+    size="$(wc -c < "$file")" || return 1
+    rel="${file#"$root"/}"
+    if [ "$size" -gt 1048576 ]; then
+      printf '%s\n' "file too large to scan: $rel" >> "$reasons"
+      findings=1
+      continue
+    fi
 
-    first_match="$(grep -nEi "$pattern" "$file" 2>/dev/null | sed -n '1p' || true)"
+    # Force text mode for embedded NULs; distinguish no match from scan errors.
+    grep_rc=0
+    matches="$(LC_ALL=C grep -anEim 1 "$pattern" "$file" 2>/dev/null)" || grep_rc=$?
+    if [ "$grep_rc" -gt 1 ]; then
+      printf '%s\n' "could not scan file: $rel" >> "$reasons"
+      findings=1
+      continue
+    fi
+    first_match="$(printf '%s\n' "$matches" | sed -n '1p')"
     if [ -n "$first_match" ]; then
       line="${first_match%%:*}"
       rel="${file#"$root"/}"
@@ -183,13 +219,13 @@ EOF_SYMLINKS
       findings=1
     fi
   done <<EOF_FILES
-$(find "$root" -type f -not -path '*/.git/*' -print)
+$(find "$root" -type f -print | LC_ALL=C sort)
 EOF_FILES
 
   [ "$findings" -eq 0 ]
-}
+)
 
-scan_all_skills() {
+scan_all_skills() (
   root="$1"
   reasons="$2"
   skill_files="$(find "$root" -type f -name SKILL.md -not -path '*/.git/*' -print)"
@@ -199,15 +235,25 @@ scan_all_skills() {
   }
 
   rc=0
+  # A linked skill directory or SKILL.md is invisible to find -type f.
+  symlinks="$(find "$root" -path "$root/.git" -prune -o -type l -print)" || return 1
+  if [ -n "$symlinks" ]; then
+    while IFS= read -r link; do
+      printf '%s\n' "symbolic link: ${link#"$root"/}" >> "$reasons"
+    done <<EOF_LINKS
+$symlinks
+EOF_LINKS
+    rc=1
+  fi
   while IFS= read -r skill_file; do
     scan_dir "$(dirname "$skill_file")" "$reasons" || rc=1
   done <<EOF_SKILLS
 $skill_files
 EOF_SKILLS
   return "$rc"
-}
+)
 
-list_all_skill_files() {
+list_all_skill_files() (
   root="$1"
   skill_files="$(find "$root" -type f -name SKILL.md -not -path '*/.git/*' -print)"
 
@@ -216,21 +262,21 @@ list_all_skill_files() {
     skill_dir="$(dirname "$skill_file")"
     skill_name="$(basename "$skill_dir")"
     say "  [$skill_name]"
-    find "$skill_dir" -type f -not -path '*/.git/*' -print | while IFS= read -r file; do
+    find "$skill_dir" -type f -print | LC_ALL=C sort | while IFS= read -r file; do
       rel="${file#"$skill_dir"/}"
       say "    $rel"
     done
   done <<EOF_SKILLS
 $skill_files
 EOF_SKILLS
-}
+)
 
-validate_repo_or_skill() {
+validate_repo_or_skill() (
   clone="$1"
   skill="${2:-}"
   reasons="$3"
   rc=0
-  validation_log="$(mktemp "${TMPDIR:-/tmp}/skillstrap-validation.XXXXXX")"
+  validation_log="$clone/../validation.log"
 
   if [ -z "$skill" ] || [ "$skill" = "--all" ]; then
     say "Files checked:"
@@ -255,7 +301,11 @@ validate_repo_or_skill() {
     return "$rc"
   fi
 
-  skill_dir="$(find_skill_dir "$clone" "$skill")"
+  skill_dir="$(find_skill_dir "$clone" "$skill")" || return 1
+  case "$skill_dir" in
+    *'
+'*) printf '%s\n' "ambiguous skill name: $skill" >> "$reasons"; return 1 ;;
+  esac
   if [ -z "$skill_dir" ]; then
     printf '%s\n' "skill '$skill' not found in repository" >> "$reasons"
     say "  FAIL  locate skill"
@@ -263,12 +313,17 @@ validate_repo_or_skill() {
     return 1
   fi
 
+  if [ "$(basename "$skill_dir")" != "$skill" ]; then
+    printf '%s\n' "skill name does not match directory: ${skill_dir#"$clone"/}" >> "$reasons"
+    return 1
+  fi
+  printf '%s\n' "${skill_dir#"$clone"/}/SKILL.md" > "$clone/../selected-skill"
   say "Files checked:"
   list_checked_files "$skill_dir"
 
-  tmp_validate="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-validate.XXXXXX")"
-  mkdir -p "$tmp_validate/skills/$skill"
-  cp -R "$skill_dir"/. "$tmp_validate/skills/$skill"/
+  tmp_validate="$clone/../validate"
+  mkdir -p "$tmp_validate/skills/$skill" || return 1
+  cp -R "$skill_dir"/. "$tmp_validate/skills/$skill"/ || return 1
 
   if gh skill publish "$tmp_validate" --dry-run >"$validation_log" 2>&1; then
     say "  PASS  Agent Skills format"
@@ -288,15 +343,18 @@ validate_repo_or_skill() {
   rm -rf "$tmp_validate"
   rm -f "$validation_log"
   return "$rc"
-}
+)
 
-audit() {
+audit() (
   repo="$1"
   skill="${2:-}"
+  mode="${3:-audit}"
 
-  tmp="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-repo.XXXXXX")"
-  reasons="$(mktemp "${TMPDIR:-/tmp}/skillstrap-reasons.XXXXXX")"
-  trap 'rm -rf "$tmp"; rm -f "$reasons"' EXIT HUP INT TERM
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-repo.XXXXXX")" || fail "could not create audit directory"
+  reasons="$tmp/reasons"
+  trap 'rm -rf "$tmp"' 0
+  trap 'exit 1' HUP INT TERM
+  : > "$reasons" || fail "could not create audit log"
 
   if [ -n "$skill" ] && [ "$skill" != "--all" ]; then
     say "Audit: $repo / $skill"
@@ -306,6 +364,9 @@ audit() {
 
   if ! clone_repo "$repo" "$tmp/repo"; then
     printf '%s\n' "could not fetch repository" >> "$reasons"
+    rc=1
+  elif ! check_filenames "$tmp/repo"; then
+    printf '%s\n' "could not inventory repository or filename contains control characters" >> "$reasons"
     rc=1
   else
     rc=0
@@ -319,28 +380,36 @@ audit() {
   else
     say "Audit result: FAIL"
     say "Reasons:"
+    [ -s "$reasons" ] || printf '%s\n' "could not complete audit" >> "$reasons"
     sed 's/^/  - /' "$reasons"
   fi
 
-  rm -rf "$tmp"
-  rm -f "$reasons"
-  trap - EXIT HUP INT TERM
+  if [ "$rc" -eq 0 ] && [ "$mode" = install ]; then
+    commit="$(git -C "$tmp/repo" rev-parse HEAD)" || fail "could not identify audited commit"
+    if [ "$skill" = --all ]; then
+      selection=--all
+    else
+      selection="$(cat "$tmp/selected-skill")" || fail "could not identify audited skill"
+    fi
+    install_for_agents "$repo" "$selection" "$commit" || return 1
+  fi
   return "$rc"
-}
+)
 
-install_for_agents() {
+install_for_agents() (
   repo="$1"
   skill="$2"
+  commit="$3"
 
   for agent in $AGENTS; do
     say "Installing for $agent"
     if [ "$skill" = "--all" ]; then
-      gh skill install "$repo" --all --agent "$agent" --scope user --force
+      gh skill install "$repo" --all --pin "$commit" --agent "$agent" --scope user --force || fail "installation failed for $agent; earlier agents may already be installed"
     else
-      gh skill install "$repo" "$skill" --agent "$agent" --scope user --force
+      gh skill install "$repo" "$skill" --pin "$commit" --agent "$agent" --scope user --force || fail "installation failed for $agent; earlier agents may already be installed"
     fi
   done
-}
+)
 
 safe_user_skill_path() {
   skill="$1"
@@ -414,6 +483,7 @@ case "${1:-}" in
     ;;
   --dry-run)
     [ "$#" -ge 2 ] && [ "$#" -le 3 ] || fail "usage: skillstrap.sh --dry-run <owner/repo> [skill|--all]"
+    check_audit_args "$2" "${3:-}"
     check_gh_skill
     ensure_gh_auth
     if audit "$2" "${3:-}"; then
@@ -425,13 +495,12 @@ case "${1:-}" in
     ;;
   install)
     [ "$#" -eq 3 ] || fail "usage: skillstrap.sh install <owner/repo> <skill|--all>"
+    [ -n "$3" ] || fail "install requires a skill name or --all"
+    check_audit_args "$2" "$3"
+    need git
     check_gh_skill
     ensure_gh_auth
-    if audit "$2" "$3"; then
-      install_for_agents "$2" "$3"
-    else
-      fail "audit failed; nothing was installed"
-    fi
+    audit "$2" "$3" install || exit 1
     ;;
   uninstall)
     [ "$#" -eq 2 ] || fail "usage: skillstrap.sh uninstall <skill>"
