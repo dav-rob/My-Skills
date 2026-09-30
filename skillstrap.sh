@@ -411,70 +411,87 @@ install_for_agents() (
   done
 )
 
-safe_user_skill_path() {
+safe_user_skill_path() (
   skill="$1"
   path="$2"
+  home_real="$(cd "$HOME" && pwd -P)" || return 1
+  [ "$home_real" != / ] || return 1
 
   case "$path" in
-    "$HOME"/*) abs="$path" ;;
-    "~/"*) abs="$HOME/${path#~/}" ;;
+    "$HOME"/*) relative="${path#"$HOME"/}" ;;
+    "$home_real"/*) relative="${path#"$home_real"/}" ;;
+    "~/"*) relative="${path#'~/'}" ;;
     /*) return 1 ;;
-    *) abs="$HOME/${path#./}" ;;
+    *) relative="${path#./}" ;;
   esac
-
-  [ "$(basename "$abs")" = "$skill" ] || return 1
-  case "$abs" in
-    "$HOME"/*/skills/*) printf '%s\n' "$abs" ;;
+  case "/$relative/" in
+    *'/../'*|*'/./'*|*'//'*) return 1 ;;
+  esac
+  [ "${relative##*/}" = "$skill" ] || return 1
+  parent="${relative%/*}"
+  case "$parent" in
+    .agents/skills|.codex/skills|.claude/skills|.cursor/skills|\
+    .config/opencode/skills|.gemini/antigravity/skills|\
+    .gemini/antigravity-cli/skills|.gemini/config/plugins/My-Skills/skills) : ;;
     *) return 1 ;;
   esac
-}
 
-uninstall_skill() {
+  parent_real="$(cd "$HOME/$parent" && pwd -P)" || return 1
+  # Resolve parents, never the leaf: deleting an installed symlink removes it only.
+  [ "$parent_real" = "$home_real/$parent" ] || return 1
+  printf '%s\n' "$HOME/$relative"
+)
+
+uninstall_skill() (
   skill="$1"
+  case "$skill" in
+    ""|.|..|*/*) fail "uninstall requires an exact skill name" ;;
+  esac
+  case "$skill" in
+    *'
+'*) fail "skill name contains control characters" ;;
+  esac
+  if printf '%s' "$skill" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    fail "skill name contains control characters"
+  fi
   check_gh_skill
 
-  rows="$(mktemp "${TMPDIR:-/tmp}/skillstrap-list.XXXXXX")"
-  seen="$(mktemp "${TMPDIR:-/tmp}/skillstrap-seen.XXXXXX")"
-  trap 'rm -f "$rows" "$seen"' EXIT HUP INT TERM
+  tmp_uninstall="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-uninstall.XXXXXX")" || fail "could not create uninstall directory"
+  trap 'rm -rf "$tmp_uninstall"' 0
+  trap 'exit 1' HUP INT TERM
+  rows="$tmp_uninstall/rows"
+  seen="$tmp_uninstall/paths"
+  : > "$seen"
 
   gh skill list --scope user \
-    --json skillName,path,sourceURL \
-    --template '{{range .}}{{printf "%s\t%s\t%s\n" .skillName .path .sourceURL}}{{end}}' \
-    > "$rows"
+    --json skillName,path \
+    --template '{{range .}}{{if or (regexMatch "[[:cntrl:]]" .skillName) (regexMatch "[[:cntrl:]]" .path)}}INVALID{{else}}{{printf "%s\t%s" .skillName .path}}{{end}}{{"\n"}}{{end}}' \
+    > "$rows" || fail "could not list installed skills"
 
-  found=0
-  while IFS="$(printf '\t')" read -r name path source; do
+  # Validate the complete removal set before deleting the first installation.
+  while IFS="$(printf '\t')" read -r name path; do
+    [ "$name" != INVALID ] || fail "installed skill list contains control characters"
     [ "$name" = "$skill" ] || continue
-
-    abs="$(safe_user_skill_path "$skill" "$path" || true)"
-    [ -n "$abs" ] || fail "refusing unsafe uninstall path reported by gh: $path"
-
-    if grep -Fqx "$abs" "$seen" 2>/dev/null; then
-      continue
+    abs="$(safe_user_skill_path "$skill" "$path")" || fail "refusing unsafe uninstall path reported by gh"
+    if ! grep -Fqx "$abs" "$seen"; then
+      printf '%s\n' "$abs" >> "$seen"
     fi
-    printf '%s\n' "$abs" >> "$seen"
+  done < "$rows"
+  [ -s "$seen" ] || fail "no user-scope skill named '$skill' is installed"
 
+  while IFS= read -r abs; do
+    # Recheck parents immediately before removal as well as during preflight.
+    safe_user_skill_path "$skill" "$abs" >/dev/null || fail "uninstall path changed during removal"
     say "Removing $skill"
     say "  $abs"
-    [ -n "$source" ] && say "  source: $source"
-
     if [ -L "$abs" ] || [ -f "$abs" ]; then
-      rm -f "$abs"
+      rm -f "$abs" || fail "could not remove $abs"
     elif [ -d "$abs" ]; then
-      rm -rf "$abs"
+      rm -rf "$abs" || fail "could not remove $abs"
     fi
-    found=1
-  done < "$rows"
-
-  rm -f "$rows" "$seen"
-  trap - EXIT HUP INT TERM
-
-  if [ "$found" -eq 0 ]; then
-    fail "no user-scope skill named '$skill' is installed"
-  fi
-
+  done < "$seen"
   say "Uninstalled '$skill'."
-}
+)
 
 case "${1:-}" in
   "")

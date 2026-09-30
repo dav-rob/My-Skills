@@ -32,8 +32,11 @@ elif args[:2] == ['skill', 'publish']:
 elif args[:2] == ['skill', 'list']:
     rows = json.loads((state / 'rows.json').read_text())
     for name, path in rows:
-        if pathlib.Path(path.replace('~/', os.environ['HOME'] + '/', 1)).exists():
-            print(name + '\t' + path + '\ttest/source')
+        if (state / 'report-stale').exists() or pathlib.Path(path.replace('~/', os.environ['HOME'] + '/', 1)).exists():
+            if any(ord(c) < 32 or ord(c) == 127 for c in name + path):
+                print('INVALID')
+            else:
+                print(name + '\t' + path)
 elif args[:2] == ['skill', 'install']:
     if (state / 'install-fails').exists():
         sys.exit(1)
@@ -205,6 +208,79 @@ class SkillstrapTests(unittest.TestCase):
         out = self.run_cli('install', 'test/source', 'safe', ok=False)
         self.assertIn('installation failed for opencode', out)
         self.assertEqual(len(self.installs()), 1)
+
+    def installed(self, name, directory='.agents/skills'):
+        path = self.home / directory / name
+        path.mkdir(parents=True, exist_ok=True)
+        (path / 'SKILL.md').write_text('fixture')
+        return path
+
+    def report(self, rows):
+        (self.state / 'rows.json').write_text(json.dumps([(name, str(path)) for name, path in rows]))
+
+    def test_uninstall_legacy_name_preserves_replacement_and_lists_result(self):
+        directories = ['.config/opencode/skills', '.agents/skills', '.claude/skills',
+                       '.cursor/skills', '.gemini/antigravity/skills', '.gemini/antigravity-cli/skills']
+        old = [self.installed('exact address', d) for d in directories]
+        new = [self.installed('exact-address', d) for d in directories]
+        self.report([('exact address', p) for p in old] + [('exact-address', p) for p in new])
+        self.run_cli('uninstall', 'exact address')
+        self.assertTrue(all(not p.exists() for p in old))
+        self.assertTrue(all(p.is_dir() for p in new))
+        out = self.run_cli('list')
+        self.assertIn('exact-address', out)
+        self.assertNotIn('exact address', out)
+
+    def test_uninstall_expands_tilde_and_deduplicates(self):
+        old = self.installed('exact address')
+        self.report([('exact address', '~/'+str(old.relative_to(self.home))), ('exact address', old)])
+        out = self.run_cli('uninstall', 'exact address')
+        self.assertFalse(old.exists())
+        self.assertEqual(out.count('Removing exact address'), 1)
+
+    def test_uninstall_preflights_every_path_before_deletion(self):
+        safe = self.installed('safe')
+        unsafe = self.home / 'documents/skills/safe'
+        unsafe.mkdir(parents=True)
+        self.report([('safe', safe), ('safe', unsafe)])
+        self.run_cli('uninstall', 'safe', ok=False)
+        self.assertTrue(safe.is_dir())
+        self.assertTrue(unsafe.is_dir())
+
+    def test_uninstall_refuses_traversal_and_outside_home(self):
+        victim = self.base / 'outside/skills/safe'
+        victim.mkdir(parents=True)
+        for path in [victim, str(self.home) + '/../outside/skills/safe',
+                     str(self.home) + '/.agents/skills/../../../outside/skills/safe']:
+            with self.subTest(path=path):
+                self.report([('safe', path)])
+                (self.state / 'report-stale').touch()
+                self.run_cli('uninstall', 'safe', ok=False)
+                self.assertTrue(victim.is_dir())
+
+    def test_uninstall_refuses_symlinked_parent(self):
+        victim = self.base / 'outside/skills/safe'
+        victim.mkdir(parents=True)
+        (self.home / '.agents').symlink_to(self.base / 'outside', target_is_directory=True)
+        self.report([('safe', self.home / '.agents/skills/safe')])
+        self.run_cli('uninstall', 'safe', ok=False)
+        self.assertTrue(victim.is_dir())
+
+    def test_uninstall_removes_only_leaf_symlink(self):
+        victim = self.base / 'outside'
+        victim.mkdir()
+        (self.home / '.agents/skills').mkdir(parents=True)
+        link = self.home / '.agents/skills/safe'
+        link.symlink_to(victim, target_is_directory=True)
+        self.report([('safe', link)])
+        self.run_cli('uninstall', 'safe')
+        self.assertFalse(link.is_symlink())
+        self.assertTrue(victim.is_dir())
+
+    def test_uninstall_missing_skill_and_invalid_names_fail(self):
+        for name in ['missing', '', '.', '..', '../safe', 'bad\nname']:
+            with self.subTest(name=name):
+                self.run_cli('uninstall', name, ok=False)
 
     def test_list_forwards_user_scope(self):
         self.run_cli('list')
