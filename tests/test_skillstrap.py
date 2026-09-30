@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'skillstrap.sh'
-AGENTS = ['opencode', 'codex', 'claude-code', 'cursor', 'antigravity', 'antigravity-cli']
+AGENTS = ['opencode', 'codex', 'claude-code', 'cursor', 'antigravity', 'antigravity2.0', 'antigravity-cli']
 
 SHIM = r'''#!/usr/bin/env python3
 import json, os, pathlib, shutil, subprocess, sys
@@ -143,12 +143,12 @@ class SkillstrapTests(unittest.TestCase):
         self.assertNotIn('DO_NOT_PRINT_UNTRUSTED_CONTENT', out)
         self.assertFalse(self.installs())
 
-    def test_named_install_is_pinned_for_all_six_agents(self):
+    def test_named_install_is_pinned_for_all_seven_agents(self):
         self.skill()
         self.skill('other')
         self.run_cli('install', 'test/source', 'safe')
         calls = self.installs()
-        self.assertEqual(len(calls), 6)
+        self.assertEqual(len(calls), 7)
         self.assertEqual([c[c.index('--agent') + 1] for c in calls], AGENTS)
         for call in calls:
             self.assertIn('skills/safe/SKILL.md', call)
@@ -162,7 +162,7 @@ class SkillstrapTests(unittest.TestCase):
         self.run_cli('install', 'test/source', '', ok=False)
         self.assertFalse(self.installs())
         self.run_cli('install', 'test/source', '--all')
-        self.assertEqual(len(self.installs()), 6)
+        self.assertEqual(len(self.installs()), 7)
         self.assertTrue(all('--all' in c and '--pin' in c for c in self.installs()))
 
     def test_missing_skill_and_duplicate_names_fail(self):
@@ -220,7 +220,8 @@ class SkillstrapTests(unittest.TestCase):
 
     def test_uninstall_legacy_name_preserves_replacement_and_lists_result(self):
         directories = ['.config/opencode/skills', '.agents/skills', '.claude/skills',
-                       '.cursor/skills', '.gemini/antigravity/skills', '.gemini/antigravity-cli/skills']
+                       '.cursor/skills', '.gemini/antigravity/skills', '.gemini/config/skills',
+                       '.gemini/antigravity-cli/skills']
         old = [self.installed('exact address', d) for d in directories]
         new = [self.installed('exact-address', d) for d in directories]
         self.report([('exact address', p) for p in old] + [('exact-address', p) for p in new])

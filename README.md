@@ -1,7 +1,7 @@
 # My-Skills
 
 Personal Agent Skills and a small GitHub CLI wrapper for distributing them to
-OpenCode, Codex, Claude Code, Cursor, Antigravity and Antigravity CLI.
+OpenCode, Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI.
 
 ## Bootstrap
 
@@ -34,10 +34,16 @@ without printing skill bodies or untrusted validator diagnostics. Files over
 audit. This scan catches obvious suspicious patterns; it is not complete malware
 detection and needs no installed auditor skill.
 
-Installs overwrite the selected skills at user scope for all six agents and pin
+Installs overwrite the selected skills at user scope for all seven targets and pin
 them to the audited commit. Named installs use the exact audited repository path.
 Rerun an explicit install to audit and install a newer revision. If an agent's
 install fails, the command stops; installations for earlier agents may remain.
+
+Antigravity 2.0 uses `~/.gemini/config/skills`; the older Antigravity target uses
+`~/.gemini/antigravity/skills`, and the CLI uses `~/.gemini/antigravity-cli/skills`.
+The `antigravity2.0` target installs plain skills into the newer directory, without
+creating a plugin. See [Google's skill locations](https://www.antigravity.google/docs/skills?tab=ide)
+and [GitHub CLI's target mappings](https://github.com/cli/cli/blob/v2.101.0/internal/skills/registry/registry.go).
 
 Uninstall uses the exact installed name reported by `gh skill list --scope user`.
 It validates every matching path before removing any installation, allows only
@@ -61,9 +67,11 @@ homes; they are not part of the offline suite.
 
 ## Legacy linker
 
-`skills/link-skills.sh` remains for manual compatibility. It symlinks a local
-checkout into `~/.agents/skills` and builds a Gemini plugin under
-`~/.gemini/config/plugins/My-Skills`. There are no repository callers and
-`skillstrap.sh` does not invoke it. Its plugin creation is separate from current
-`gh skill` installation, so it has been retained. Use `skillstrap.sh` for current
-audited distribution.
+`skills/link-skills.sh` is deprecated; use `skillstrap.sh` for audited distribution,
+including Antigravity 2.0. The linker exposes every skill directly under this
+checkout's `skills/` directory through individual symlinks in `~/.agents/skills`
+and `~/.gemini/config/plugins/My-Skills/skills`, and creates a minimal `plugin.json`.
+It does not mirror skills installed from other repositories, audit content, update
+existing links, or remove stale links. Checkout edits become visible immediately.
+There are no repository callers and `skillstrap.sh` does not invoke it. Retire it
+after confirming Antigravity discovers the plain skills in the newer directory.

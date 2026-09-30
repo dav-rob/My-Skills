@@ -6,7 +6,7 @@ SELF_URL="https://raw.githubusercontent.com/dav-rob/My-Skills/main/skillstrap.sh
 BIN_DIR="$HOME/.local/bin"
 BIN_PATH="$BIN_DIR/skillstrap.sh"
 ZSHRC="$HOME/.zshrc"
-AGENTS="opencode codex claude-code cursor antigravity antigravity-cli"
+AGENTS="opencode codex claude-code cursor antigravity antigravity2.0 antigravity-cli"
 GH_PROMPT_DISABLED=1
 GH_PAGER=cat
 export GH_PROMPT_DISABLED GH_PAGER
@@ -35,7 +35,8 @@ No arguments installs/updates only the skillstrap.sh command itself and ensures
 
 --dry-run audits without installing.
 install audits first, then installs the named skill (or --all) for OpenCode,
-Codex, Claude Code, Cursor, Antigravity and Antigravity CLI at user scope.
+Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI
+at user scope.
 uninstall removes every user-scope installation with that exact skill name.
 USAGE
 }
@@ -432,7 +433,8 @@ safe_user_skill_path() (
   case "$parent" in
     .agents/skills|.codex/skills|.claude/skills|.cursor/skills|\
     .config/opencode/skills|.gemini/antigravity/skills|\
-    .gemini/antigravity-cli/skills|.gemini/config/plugins/My-Skills/skills) : ;;
+    .gemini/antigravity-cli/skills|.gemini/config/skills|\
+    .gemini/config/plugins/My-Skills/skills) : ;;
     *) return 1 ;;
   esac
 
