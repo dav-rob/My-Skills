@@ -65,13 +65,14 @@ Git fixtures. It requires Python 3 and Git, and does not modify real installed
 skills. Live network checks and real CLI installs were also verified in temporary
 homes; they are not part of the offline suite.
 
-## Legacy linker
+## Retired linker
 
-`skills/link-skills.sh` is deprecated; use `skillstrap.sh` for audited distribution,
-including Antigravity 2.0. The linker exposes every skill directly under this
-checkout's `skills/` directory through individual symlinks in `~/.agents/skills`
-and `~/.gemini/config/plugins/My-Skills/skills`, and creates a minimal `plugin.json`.
-It does not mirror skills installed from other repositories, audit content, update
-existing links, or remove stale links. Checkout edits become visible immediately.
-There are no repository callers and `skillstrap.sh` does not invoke it. Retire it
-after confirming Antigravity discovers the plain skills in the newer directory.
+The former `skills/link-skills.sh` was removed after Antigravity 2.18.1 visibly
+loaded `exact-address` as a Global skill from `~/.gemini/config/skills`. Plugins
+and checkout symlinks are unnecessary for this installation route.
+
+The linker exposed every skill in a local checkout through individual symlinks in
+`~/.agents/skills` and `~/.gemini/config/plugins/My-Skills/skills`, and created a
+minimal `plugin.json`. It did not audit content or maintain existing/stale links;
+checkout edits became visible immediately. Use explicit `skillstrap.sh` installs
+instead. Removing the script does not remove any existing links or plugin files.
