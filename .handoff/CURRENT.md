@@ -1,5 +1,10 @@
 # Current
 
+The vision is distribution from any GitHub repository to every compatible tool,
+with safety and security as the primary design goals. The current seven targets
+and conservative static audit are implementation limits to improve, not limits
+on the project's intended scope. No runtime expansion was made by this vision correction.
+
 Antigravity 2.0 support is complete on `main`: seven install targets, including
 `antigravity2.0`, and uninstall support for `.gemini/config/skills`.
 

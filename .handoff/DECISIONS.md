@@ -1,5 +1,13 @@
 # Decisions
 
+Decision: Define the project around any GitHub source, every compatible tool,
+and the safest, most secure distribution possible.
+Reason: The user clarified that personal skills and the current supported tools
+describe today's implementation rather than the vision.
+Alternatives considered: Limiting the goal to dav-rob/My-Skills and seven targets.
+Consequences: Future coverage and safeguards should serve this broader goal;
+do not describe current static checks as the final security solution.
+
 Decision: Bootstrap only installs the command and its PATH line.
 Reason: Skill installation must always be explicit.
 Alternatives considered: Implicit installation of all personal skills.

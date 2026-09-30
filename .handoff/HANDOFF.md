@@ -2,9 +2,15 @@
 
 ## Current objective
 
-Completed Antigravity 2.0 installation and discovery support.
+Corrected the vision to distributing skills from any GitHub repository to every
+compatible tool, as safely and securely as possible. Antigravity 2.0 installation
+and discovery support was completed beforehand.
 
 ## What was done
+
+Updated VISION, README and current/decision context to reflect the user's clarified
+scope and security priority. This correction changed documentation only; the
+current implementation still supports seven targets and a static pre-install audit.
 
 Added `antigravity2.0` while retaining older Antigravity and CLI targets. Added
 `.gemini/config/skills` to the uninstall allowlist and expanded regression coverage
@@ -59,4 +65,5 @@ and recent history, and run README checks before further changes.
 
 Do not restore implicit skill installs, expose checkout content through automatic
 symlinks, rename exact-address back, or assume gh installation proves app discovery.
-Keep this a small wrapper rather than a large framework.
+Keep implementation changes focused and dependable while serving the broader
+vision. The current wrapper, tool list and audit are not limits on that vision.

@@ -1,7 +1,14 @@
 # My-Skills
 
-Personal Agent Skills and a small GitHub CLI wrapper for distributing them to
+The vision is to distribute all skills from any GitHub repository to every tool that
+can use them, as safely and securely as possible. Safety and security are the
+primary design goals across auditing, installation, updates and removal.
+
+The current implementation is `skillstrap.sh`, a GitHub CLI wrapper supporting
 OpenCode, Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI.
+This repository also contains a personal skill collection; it is one source
+among the repositories the manager can install from. The current target list
+and static audit are an initial implementation of the broader vision.
 
 ## Bootstrap
 
