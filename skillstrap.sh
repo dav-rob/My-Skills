@@ -54,20 +54,23 @@ ensure_gh_auth() {
   fi
 }
 
-install_self() {
+install_self() (
   need curl
   mkdir -p "$BIN_DIR"
 
-  tmp_self="$(mktemp "${TMPDIR:-/tmp}/skillstrap.XXXXXX")"
+  tmp_self="$(mktemp "$BIN_DIR/.skillstrap.XXXXXX")"
+  trap 'rm -f "$tmp_self"' 0
+  trap 'exit 1' HUP INT TERM
   if ! curl -fsSL "$SELF_URL" -o "$tmp_self"; then
     rm -f "$tmp_self"
     fail "could not download $SELF_URL"
   fi
+  sh -n "$tmp_self" || fail "downloaded command is not valid shell syntax"
   chmod 0755 "$tmp_self"
   mv "$tmp_self" "$BIN_PATH"
 
   touch "$ZSHRC"
-  if ! grep -Fq '# >>> skillstrap >>>' "$ZSHRC"; then
+  if ! grep -Fqx 'export PATH="$HOME/.local/bin:$PATH"' "$ZSHRC"; then
     cat >> "$ZSHRC" <<'EOF_PATH'
 
 # >>> skillstrap >>>
@@ -91,7 +94,7 @@ EOF_PATH
   say "  skillstrap.sh --dry-run $REPO_DEFAULT"
   say "  skillstrap.sh install $REPO_DEFAULT exact-address"
   say "  skillstrap.sh install $REPO_DEFAULT --all"
-}
+)
 
 clone_repo() {
   repo="$1"
@@ -406,6 +409,7 @@ uninstall_skill() {
 
 case "${1:-}" in
   "")
+    [ "$#" -eq 0 ] || fail "empty command; use help for usage"
     install_self
     ;;
   --dry-run)
@@ -434,6 +438,7 @@ case "${1:-}" in
     uninstall_skill "$2"
     ;;
   list)
+    [ "$#" -eq 1 ] || fail "usage: skillstrap.sh list"
     check_gh_skill
     gh skill list --scope user
     ;;
