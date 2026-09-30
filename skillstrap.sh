@@ -217,10 +217,10 @@ audit() {
 
   if [ -n "$skill" ]; then
     say "Preview: $repo / $skill"
-    GH_PAGER=cat gh skill preview "$repo" "$skill" || rc=$?
+    GH_PROMPT_DISABLED=1 GH_PAGER=cat gh skill preview "$repo" "$skill" || rc=$?
   else
     say "Available skills: $repo"
-    gh skill install "$repo" | sed -n '1,80p' || true
+    GH_PROMPT_DISABLED=1 gh skill install "$repo" | sed -n '1,80p' || true
   fi
 
   rm -rf "$tmp"
@@ -250,7 +250,7 @@ install_default() {
 
   say "Auditing $REPO_DEFAULT"
   if ! audit "$REPO_DEFAULT"; then
-    fail "audit failed; nothing was installed"
+    fail "audit failed; skills were not installed"
   fi
 
   install_for_agents "$REPO_DEFAULT"
