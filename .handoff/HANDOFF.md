@@ -2,6 +2,10 @@
 
 ## Current objective
 
+Latest request complete: create and check in a `mac-login` skill describing the
+tested Mac Keychain website-login workflow. `b9abc7a` is pushed on main. Its
+entrypoint and helper are self-contained; see `skills/mac-login/SKILL.md`.
+
 Corrected the vision to distributing skills from any GitHub repository to every
 compatible tool, as safely and securely as possible. Antigravity 2.0 installation
 and discovery support was completed beforehand.
@@ -19,7 +23,12 @@ exact-address, verified actual app discovery, and retired the legacy linker.
 
 ## Current state
 
-- 24 tests pass under sh and dash; syntax and diff checks pass.
+- 33 tests pass under sh and dash (24 distribution/nine credential-helper);
+  skill format, shell syntax and diff checks pass.
+- Bundled credential helper's fresh-process readonly access check passed for
+  the previously authorized Rightmove Keychain item. No credential values were
+  printed, no item was modified, and no new browser login/import was performed
+  while packaging the skill. The daily task remains owned by the auction chat.
 - Bootstrap downloaded the pushed script, updated `~/.local/bin/skillstrap.sh`,
   and was verified byte-for-byte against the repository source.
 - The updated command installed exact-address for all seven targets at `1988bce`.
@@ -49,6 +58,9 @@ Implementation finished: `skillstrap.sh`, `tests/test_skillstrap.py`, `README.md
 `skills/link-skills.sh` was removed; existing user links/plugin files were not deleted.
 
 ## Relevant recent commits
+
+- `b9abc7a`: add mac-login instructions, parameterized Keychain/clipboard helper
+  and nine isolated regression checks.
 
 - `1988bce`: add Antigravity 2.0 install/uninstall support, tests and usage docs.
 - `be59bd2`: retire linker after native app discovery was confirmed.

@@ -8,6 +8,10 @@
 - `skills/exact-address/SKILL.md`: canonical renamed address-finding skill.
 - `skills/fine-grained-commits/`: commit/push workflow and agent metadata.
 - `skills/handoff/SKILL.md`: repository handoff workflow.
+- `skills/mac-login/SKILL.md`: scoped Mac Keychain website-login workflow and
+  the tested native Chrome paste method. `scripts/credentials.py` inside the
+  skill is its standalone setup/check/clipboard helper; nine isolated regressions
+  are in `tests/test_mac_login_credentials.py`.
 - Former `skills/link-skills.sh`: removed in `be59bd2` after native Antigravity 2.0
   discovery was verified; no repository callers depended on it.
 - `.handoff/`: project context, kept separate from implementation commits.
