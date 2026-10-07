@@ -2,15 +2,21 @@
 
 ## Current objective
 
-Latest request complete: create and check in a `mac-login` skill describing the
-tested Mac Keychain website-login workflow. `b9abc7a` is pushed on main. Its
-entrypoint and helper are self-contained; see `skills/mac-login/SKILL.md`.
+Latest request complete: focus and generalize `mac-login`. `81dcbc4` is pushed on
+main. Start directly with the local webapp/dedicated Keychain workflow when
+interactive password-manager authentication is unsuitable; omit autofill/vault
+exploration. Personal/site-specific content is removed from the skill and its
+test fixture. See `skills/mac-login/SKILL.md`.
 
 Corrected the vision to distributing skills from any GitHub repository to every
 compatible tool, as safely and securely as possible. Antigravity 2.0 installation
 and discovery support was completed beforehand.
 
 ## What was done
+
+Refocused the existing login skill without changing helper behavior. Nine isolated
+helper tests, format validation and diff checks passed. No real Keychain or browser
+operations were performed for this revision. Installed skill copies were not updated.
 
 Updated VISION, README and current/decision context to reflect the user's clarified
 scope and security priority. This correction changed documentation only; the
@@ -25,8 +31,8 @@ exact-address, verified actual app discovery, and retired the legacy linker.
 
 - 33 tests pass under sh and dash (24 distribution/nine credential-helper);
   skill format, shell syntax and diff checks pass.
-- Bundled credential helper's fresh-process readonly access check passed for
-  the previously authorized Rightmove Keychain item. No credential values were
+- During initial packaging, the helper's fresh-process readonly access check
+  passed for a previously authorized website Keychain item. No credential values were
   printed, no item was modified, and no new browser login/import was performed
   while packaging the skill. The daily task remains owned by the auction chat.
 - Bootstrap downloaded the pushed script, updated `~/.local/bin/skillstrap.sh`,
@@ -59,6 +65,7 @@ Implementation finished: `skillstrap.sh`, `tests/test_skillstrap.py`, `README.md
 
 ## Relevant recent commits
 
+- `81dcbc4`: lead directly with Keychain setup; generalize instructions and scope fixture.
 - `b9abc7a`: add mac-login instructions, parameterized Keychain/clipboard helper
   and nine isolated regression checks.
 

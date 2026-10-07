@@ -1,13 +1,16 @@
 # Current
 
-`mac-login` is now in `skills/mac-login/`, implemented and pushed as `b9abc7a`.
-It documents the 7 October Rightmove signed-out login proof, dedicated Keychain
-setup, fresh-process retrieval without dialogs and the native Chrome OS clipboard
-paste requirement. Its bundled Python helper supports explicit service/account/
-HTTPS-site parameters and refuses item overwrite. No credentials are in the skill.
-The generalized helper's readonly check succeeded against the existing owner
-Rightmove item using the established Python executable; no new item/login run
-was needed for this packaging task. Skill format validation passes.
+`mac-login` is in `skills/mac-login/`, initially implemented as `b9abc7a` and
+refocused/generalized in `81dcbc4`. It leads directly to a local setup webapp and
+dedicated Apple Keychain item when a password manager requires interactive
+authentication; agents must not spend time exploring autofill or unlocking the
+manager. Personal/site-specific instructions and test fixtures were removed.
+The existing parameterized helper is unchanged: explicit service/account/HTTPS
+origin, refusal to overwrite, fresh-process checks without dialogs and native OS
+clipboard paste. Browser-based tool logins fit this workflow; native-only flows
+need separate integration. Screen-lock/reboot operation is not established by a
+credential-access check. Nine isolated helper checks and skill format validation
+pass for this revision; no real credentials or browser sessions were accessed.
 
 The vision is distribution from any GitHub repository to every compatible tool,
 with safety and security as the primary design goals. The current seven targets
@@ -17,7 +20,7 @@ on the project's intended scope. No runtime expansion was made by this vision co
 Antigravity 2.0 support is complete on `main`: seven install targets, including
 `antigravity2.0`, and uninstall support for `.gemini/config/skills`.
 
-All 33 offline tests pass under sh and dash: the 24 existing distribution tests
+The earlier full run passed 33 offline tests under sh and dash: 24 distribution tests
 and nine scoped credential-helper checks using fake secrets/disposable loopback
 ports. Shell syntax and staged diff checks also pass. The new skill was created
 in the requested repository; installed skill copies were not updated by this task.

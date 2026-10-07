@@ -1,5 +1,13 @@
 # Decisions
 
+Decision: Make mac-login a direct dedicated-Keychain workflow for unattended
+website/browser-based tool sign-in when a password manager needs a human unlock.
+Reason: The user wants reusable instructions that avoid unsuccessful autofill and
+vault exploration. Password-manager protections remain intact.
+Consequences: Generic examples only; credential retrieval and browser operation
+are verified separately. Native-only tools need their own integration, and
+screen-lock/reboot reliability must not be inferred from a retrieval check.
+
 Decision: Define the project around any GitHub source, every compatible tool,
 and the safest, most secure distribution possible.
 Reason: The user clarified that personal skills and the current supported tools
