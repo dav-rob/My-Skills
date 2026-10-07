@@ -1,62 +1,40 @@
 ---
 name: mac-login
 description: >-
-  Set up and verify unattended website login on macOS with a dedicated Mac
-  Keychain item and a local clipboard bridge when browser saved-password access
-  is unavailable. Use for existing website credentials and repeatable browser
-  sign-in; not macOS account login, password changes or bypassing MFA/CAPTCHA.
+  Enable unattended credential access for website and browser-based tool logins
+  on macOS when a password manager requires interactive authentication. Use a
+  local setup webapp and dedicated Apple Keychain item to keep username/password
+  values out of agent context. Not for unlocking macOS or bypassing MFA/CAPTCHA.
 ---
 
 # Mac Login
 
-Enable an authorized website sign-in without putting credential values in chat,
-tool output, prompts, files or process arguments. This is the fallback proven
-with Rightmove on David's Mac on 7 October 2026: a separate Python process could
-retrieve the dedicated Keychain item without an unlock, and Chrome completed
-login from an explicitly signed-out state. It does not establish access while
-the Mac/Keychain is locked or after a reboot.
+Use a dedicated Apple Keychain item when a website login must run without someone
+present to authenticate a password manager. The user enters the username/password
+once in a local setup webapp; later runs retrieve that item without an interactive
+unlock and copy each field for normal sign-in.
 
-## Choose the credential path
+**Start directly with this workflow.** A password manager that requires an
+interactive unlock is unsuitable for unattended runs. Do not spend time testing
+autofill, attempting to unlock the manager or exploring its vault. This workflow
+stores a separate, explicitly authorized credential; it leaves the password
+manager's protections intact.
 
-Use an available approved password-manager/autofill workflow when it works.
-Imported passwords alone do not prove the agent can invoke autofill unattended.
-Inspect the actual available browser capabilities and signed-in state; do not
-assume either. Stop exploring the manager when its usable interface is unavailable
-and offer the scoped Keychain setup below. Do not extract browser vault databases
-or change global authentication/unlock policy.
+The helper supports username/password websites, including browser-based sign-in
+for other tools. Other credential types and native-only login flows need their
+own integration. Non-interactive credential retrieval has been demonstrated;
+screen-locked browser operation and access after reboot are separate checks.
 
-The skill authorizes no new destination or website action. Establish the task's
-target and permitted operations from the user's instructions; reuse existing
-authorization rather than asking again on every sign-in. For a new Keychain item, have the
-user enter and explicitly save the login through the local setup form; never
-silently copy credentials into persistent storage. Existing stored credentials
-can be reused only for their authorized task/site. A login password grants normal
-account capabilities; a read-only task remains an agent behavior constraint.
+## 1. Choose the item and set it up once
 
-## Set up a dedicated Keychain item
+Use the bundled [scripts/credentials.py](scripts/credentials.py), which calls
+macOS Security.framework directly and needs no extra Python dependencies.
+Choose a dedicated service name, a non-secret account key (usually the hostname)
+and the authorized HTTPS website origin. `--account` identifies the Keychain
+item; it is not the user's email. Reuse the same Python executable for setup and
+scheduled runs: a different interpreter identity may require a new access grant.
 
-Use the bundled [scripts/credentials.py](scripts/credentials.py). It uses macOS
-Security.framework directly, has no extra Python dependency, and accesses only
-the specified generic service/account item. Choose a dedicated stable service
-name and a non-secret account key such as the website hostname. `--account` is
-the storage key, not the person's email. Use the same Python executable for setup
-and scheduled runs; changing interpreter identity may require a new access grant.
-
-For the already-established Rightmove credential, the exact tuple is:
-
-```text
-service: com.davrob.auction-properties.rightmove-sync
-account: rightmove.co.uk
-site: https://www.rightmove.co.uk
-Python: /Users/davidroberts/projects/quick-scripts/auction-properties/.venv/bin/python3
-```
-
-Do not recreate or replace that item when it is already usable. For another
-task/site, choose its own service/account rather than reusing this example.
-Resolve the helper path from the loaded skill's directory; do not assume the
-skill was installed at the repository checkout path.
-
-Start the helper using the chosen Python and explicit non-secret scope:
+Resolve the helper from this skill's directory. For example:
 
 ```bash
 python3 /absolute/path/to/mac-login/scripts/credentials.py serve \
@@ -64,22 +42,22 @@ python3 /absolute/path/to/mac-login/scripts/credentials.py serve \
   --site https://example.com
 ```
 
-Open the printed `http://127.0.0.1:<random-port>/#<token>` link in Chrome using
-the available Computer Use tool. Show/mark the page for user handoff. The user
-enters their username/password there and clicks **Save login to Mac Keychain**.
-Read only `#status` to verify saving; do not capture inputs while they are typing.
-The helper refuses to overwrite an existing item. Replacement/removal belongs
-in Keychain Access with the user's direction.
+Open the printed `http://127.0.0.1:<random-port>/#<token>` link with the available
+Computer Use tool. Show the page to the user, who enters the login and clicks
+**Save login to Mac Keychain**. Read only `#status` to verify saving; do not read
+or capture the credential inputs. Saving requires the user's explicit action.
+If the authorized item already exists, reuse it instead of repeating setup.
+The helper refuses overwrites; replacements belong in Keychain Access with the
+user's direction.
 
-The helper accepts credential operations only with the exact loopback Host,
-Origin and random token. It suppresses request logging and uses no-store/CSP
-headers. The page removes the fragment from the address bar; refresh loses the
-in-memory token. Reopen the originally printed link or start a fresh helper,
-instead of loosening checks. Do not persist the link token in Git or task prompts.
+The temporary webapp checks the exact loopback Host, Origin and random token,
+suppresses request logs and uses no-store/CSP headers. It removes the fragment
+from the address bar. A refresh loses its in-memory token; reopen the original
+link or restart the helper. Do not persist that token link in files or prompts.
 
-## Prove unattended retrieval and fresh login
+## 2. Verify access without a human
 
-Run `check` in a **new process** with the same scope and Python executable:
+Run `check` in a **new process**, using the same Python and item scope:
 
 ```bash
 python3 /absolute/path/to/mac-login/scripts/credentials.py check \
@@ -87,56 +65,45 @@ python3 /absolute/path/to/mac-login/scripts/credentials.py check \
   --site https://example.com
 ```
 
-This prints availability only. Reads temporarily suppress interactive Keychain
-dialogs for that process and restore its previous interaction policy. A locked
-item or approval requirement produces failure, not a morning unlock request.
-If it fails, resolve the specific access issue with the user present; do not
-disable protections or promise unattended operation based on the setup process.
+This prints availability only. Reads suppress interactive Keychain dialogs for
+that process and restore its previous interaction policy. An unavailable item
+fails instead of asking for a morning unlock. Resolve a failure while the user
+is present; do not weaken global Keychain or password-manager protections.
 
-Use Computer Use for the website login. Inspect authentication state first; when
-commissioning unattended access, explicitly sign out if needed and prove a fresh
-sign-in. Match the actual destination to the user's authorized site before
-pasting anything. For Chrome on the tested Mac:
+## 3. Complete and verify normal sign-in
 
-1. Start/open the local helper and click **Copy username**. Verify `#status`.
-2. Select the website tab in the native Google Chrome app from a fresh AX state,
-   focus its observed username/email field, and use native
-   `app.pressKey("super+v")`. Continue to the password step as required.
-3. Click the helper's **Copy password**, focus the observed password field in
-   the correct Chrome tab, and use the same native paste. Submit normal sign-in.
-4. Verify the authenticated account/task page without reading secret fields.
-   Click **Clear clipboard**, close temporary helper tabs and stop only the
-   helper process started for this attempt.
+Use the available Computer Use tool. When commissioning unattended login,
+explicitly sign out if already signed in and prove a fresh sign-in. Match the
+destination to the authorized site before pasting credentials.
 
-**Tested trap:** the browser-tab `pressKey(null, "super+v")` path used a separate
-virtual clipboard and failed with “no data to paste”, despite the helper's
-successful OS clipboard write. Native Chrome `pressKey("super+v")` worked.
-Native app actions affect its active tab; background browser actions may not
-select that tab. Verify the native active tab/focused field rather than pasting
-into whichever app happens to be foreground. Other environments may have
-different clipboard routing; inspect supported APIs before choosing a method.
+1. Open the helper and click **Copy username**; verify `#status`.
+2. Select the website in the native browser, focus its observed username field
+   and paste from the OS clipboard. Continue to the password step as required.
+3. Click **Copy password**, focus the correct password field and paste. Submit
+   sign-in and verify the authenticated task page without reading secret fields.
+4. Click **Clear clipboard**, close temporary helper tabs and stop the helper
+   process started for this attempt.
+
+For Chrome, native `app.pressKey("super+v")` worked. Browser-tab
+`pressKey(null, "super+v")` used a separate virtual clipboard and failed with
+“no data to paste”. Select and verify the native active tab/focused field from
+fresh UI state; background browser actions may not select that tab. For other
+browsers, use their supported native OS-clipboard paste operation.
 
 Never read the clipboard, a password input value or the `/copy` response into
-tool results. Clipboard-copy necessarily puts credentials in local memory and
-the OS clipboard; it does not print them or save plaintext files. Do not use
-shell `security add-generic-password -w <password>` or a shell pipe to expose/transfer values.
+agent context. Credentials temporarily exist in local memory and the OS
+clipboard; this bridge keeps them out of chat, tool output, logs, plaintext
+files and process arguments. Do not replace it with secret-bearing shell commands.
 
-## Carry the proof into recurring work
+## 4. Record the operating limits
 
-Only mark unattended login verified after both the new-process check and the
-fresh website sign-in pass. When setting up a user-requested recurring task,
-keep its initial setup paused until that proof; use the scheduler's supported
-tool to update the authorized task. Record the
-non-secret service/account tuple, Python/helper paths and successful method,
-without credential values or transient token URLs. The Mac must be available
-with the agent app running; Keychain/site prompts can still interrupt later runs.
+Record the non-secret item scope, Python/helper paths and verified paste method
+for later runs. Report fresh-process access and fresh sign-in separately. For
+scheduled work, verify the actual intended conditions before claiming reliability:
+Keychain availability does not prove browser control works with the screen locked,
+and an asleep or logged-out Mac differs from a screen-locked, awake session.
 
-Do not turn a requested read-only task into website changes, credential rotation,
-manager installation, account recovery or an unrelated schedule. Stop with a
-specific failure for MFA/CAPTCHA, security interstitials, wrong account or an
-interactive unlock; follow the available tool's handoff/confirmation rules.
-
-Report whether fresh login worked, whether human interaction was needed and
-what remains blocked. The reference Rightmove run scanned 109 favourites and
-committed five new properties; importing properties is separate from this
-login skill and requires the task's own authorization and duplicate guards.
+Stored credentials grant normal account capabilities; follow only the user's
+authorized task, including any read-only constraint. Stop with a specific failure
+if MFA, CAPTCHA, an interactive unlock or a security interstitial requires a
+human. This skill does not authorize account changes or scheduling by itself.

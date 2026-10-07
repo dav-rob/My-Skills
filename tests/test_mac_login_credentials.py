@@ -140,9 +140,9 @@ class NativeReadTests(unittest.TestCase):
 
 
 class ScopeTests(unittest.TestCase):
-    def test_explicit_scope_accepts_existing_rightmove_item(self):
-        self.assertEqual(credentials.validate_scope('com.davrob.auction-properties.rightmove-sync', 'rightmove.co.uk', 'https://www.rightmove.co.uk/'),
-                         (b'com.davrob.auction-properties.rightmove-sync', b'rightmove.co.uk', 'https://www.rightmove.co.uk'))
+    def test_explicit_scope_normalizes_website_origin(self):
+        self.assertEqual(credentials.validate_scope('com.example.mac-login.task', 'example.invalid', 'https://example.invalid/'),
+                         (b'com.example.mac-login.task', b'example.invalid', 'https://example.invalid'))
 
     def test_scope_rejects_secret_urls_and_unsafe_item_keys(self):
         for site in ('http://example.invalid', 'https://user:secret@example.invalid',
