@@ -17,9 +17,10 @@ nested local/remote packaging and live flat-name uninstall also passed.
 
 Codex (GPT-6.1 Sol/high), Antigravity (Gemini 3.8 Flash/high), two discovered
 OpenCode free models at low effort, and oMLX Qwen 3.6 completed smoke requests.
-Qwen 3.8 didn't finish within 90 seconds. Cursor and Claude need authentication;
-the user was given login commands and offered to authenticate them. Their
-successful inference checks can be completed when the user confirms login.
+Claude is now authenticated: Sonnet 5.5/high JSON and Haiku 5.5/low streaming
+completed, including usage and allowance events. The CLI did not echo effective
+effort levels. Its guide was updated in `5cad8bf`. Qwen 3.8 didn't finish within
+90 seconds. Cursor still awaits confirmed login and successful inference checks.
 Never claim real quota/context exhaustion was induced or verified.
 
 Configurable install paths remain as implemented in `29424e8`: eight defaults

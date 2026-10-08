@@ -31,11 +31,17 @@ names, directories and reference files; pinned remote packaging exposed the scop
 identity quirk. Live flat-name uninstall with that metadata preserved an unrelated
 skill in a temporary HOME.
 
-Four skills were audited and installed into eight real configured paths at
+Original delivery: four skills were audited and installed into eight configured
+paths at
 `6ea908e358878b3509915ea07da0a2368340d5f7`; OpenCode was audited and installed at
 `5e51d21`. All 40 copies were verified for flat names/directories, current skill
 bodies, intact references, exact github-path and commit pin. Installed skillstrap
 list succeeds. Bootstrap did not install unrelated repository skills.
+After Claude authentication, its updated guide/reference passed validation and
+static audit, were reinstalled into all eight paths at `5cad8bf`, and were checked
+against source bodies, reference bytes and commit metadata. The two live requests
+also passed terminal/model/usage/allowance assertions. No runtime code changed;
+the 49-test suite result above is from the original delivery.
 
 ## Important discoveries
 
@@ -45,7 +51,10 @@ list succeeds. Bootstrap did not install unrelated repository skills.
   model-list and inference both need authentication.
 - Claude 2.1.294: stream control initialization gives resolvedModel and
   supportedEffortLevels. Auth failure has exit 1 and is_error true even alongside
-  subtype success. Auth status remains loggedIn false.
+  subtype success. After user login, auth status is loggedIn true. Sonnet5.5/high
+  JSON and Haiku5.5/low streaming completed with success, usage and allowance
+  events. Verbose JSON is an event array. Startup does not echo effective effort;
+  rate_limit_info allowed can coexist with rejected overage.
 - Antigravity agy 1.3.1: model list, JSON/streaming Gemini3.8/high inference,
   /usage text quotas and invalid/conflicting effort failures verified. Actual
   timeout default in help is 0s, unlike fetched documentation; set it explicitly.
@@ -57,9 +66,9 @@ list succeeds. Bootstrap did not install unrelated repository skills.
 
 ## Problems / blockers
 
-User authentication is needed for Cursor and Claude inference/model-entitlement
-verification. They were given cursor-agent login and claude auth login commands
-through the asynchronous question tool. Do not interpret silence as login.
+User authentication is still needed for Cursor inference/model-entitlement
+verification. The user confirmed Claude login, which has now been verified.
+Do not interpret silence as Cursor login.
 Qwen3.8 completion remains unverified; diagnosing or configuring oMLX wasn't the
 main task. No quota/context exhaustion was deliberately induced.
 
@@ -70,6 +79,7 @@ Implementation and installation are complete. Handoff is a separate follow-up.
 
 ## Relevant recent commits
 
+- `5cad8bf`: authenticated Claude checks, JSON array parsing and allowance feedback.
 - `5e51d21`: dynamic OpenCode free/local model discovery and verified outcomes.
 - `6ea908e`: flat-name uninstall for remote scoped source identities.
 - `3c9c00e`: five verified CLI guides, source review and nested-source regression.
@@ -77,8 +87,8 @@ Implementation and installation are complete. Handoff is a separate follow-up.
 
 ## Immediate next steps
 
-When the user confirms authentication, recheck Cursor models/parameters and
-Cursor/Claude tiny non-mutating inference, update verified scope, commit/push and
+When the user confirms Cursor authentication, recheck its models/parameters and
+tiny non-mutating inference, update verified scope, commit/push and
 explicitly reinstall only any skills whose content changed. Do not re-run all
 checks or deliberately consume an account limit to prove exhaustion detection.
 
