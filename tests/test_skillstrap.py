@@ -174,6 +174,25 @@ class SkillstrapTests(unittest.TestCase):
         self.assertEqual(len(self.installs()), 8)
         self.assertTrue(all('--all' in c and '--pin' in c for c in self.installs()))
 
+    def test_nested_cli_skill_uses_exact_path_and_flat_target_preflight(self):
+        skill = self.state / 'source' / 'skills/cli/cli-codex'
+        skill.mkdir(parents=True)
+        (skill / 'SKILL.md').write_text(
+            '---\nname: cli-codex\ndescription: Invoke Codex CLI.\n---\nUse codex exec.\n')
+        target = self.home / '.scheduled-jobs/skills/cli-codex'
+        target.parent.mkdir(parents=True)
+        outside = self.base / 'outside'
+        outside.mkdir()
+        target.symlink_to(outside, target_is_directory=True)
+        self.run_cli('install', 'test/source', 'cli-codex', ok=False)
+        self.assertFalse(self.installs())
+        target.unlink()
+        self.run_cli('install', 'test/source', 'cli-codex')
+        calls = self.installs()
+        self.assertEqual(len(calls), len(DIRECTORIES))
+        self.assertTrue(all(c[4] == 'skills/cli/cli-codex/SKILL.md' for c in calls))
+        self.assertEqual(len({c[c.index('--pin') + 1] for c in calls}), 1)
+
     def test_missing_skill_and_duplicate_names_fail(self):
         self.skill()
         self.run_cli('install', 'test/source', 'missing', ok=False)

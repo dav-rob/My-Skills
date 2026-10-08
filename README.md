@@ -99,6 +99,29 @@ symlinked parents, and removes a leaf symlink without deleting its target.
 `exact address` and `exact-address` are separate names. Unconfigured locations
 are not scanned or removed.
 
+## CLI skills
+
+Five CLI skills live under `skills/cli/`, with names `cli-codex`, `cli-cursor`,
+`cli-claude`, `cli-antigravity` and `cli-opencode`. They cover headless invocation,
+model/effort discovery, YOLO options, completion signals, quota/error handling and
+caller deadlines. They were researched with OMGSkills and official documentation,
+then checked against the installed binaries. See [research and verification](docs/CLI-SKILLS.md)
+for the candidates considered and the limits of those checks.
+
+Install these five explicitly:
+
+```sh
+for skill in cli-codex cli-cursor cli-claude cli-antigravity cli-opencode; do
+  skillstrap.sh install dav-rob/My-Skills "$skill" || break
+done
+```
+
+Each installs flat as `<configured-directory>/cli-codex/` and so on; the repository's
+`skills/cli/` grouping is not reproduced inside install roots. Each copy retains
+its exact audited source path and commit pin. CLI availability/authentication is
+separate from installing the instructions; these skills do not install binaries
+or sign into accounts.
+
 ## Checks
 
 ```sh
