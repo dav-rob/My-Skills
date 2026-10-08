@@ -38,7 +38,7 @@ may still be recorded by tools without an ephemeral option.
 | --- | --- | --- |
 | `codex` | 0.161.0 | App-server `model/list` and `account/rateLimits/read` succeeded. `gpt-6.1-sol`/`high` finished with exit 0, `turn.completed`, answer and usage. |
 | `cursor-agent` | 2026.10.01-e373342 | Help advertises parameterized model IDs. Model listing and headless prompt returned exit 1, stderr authentication required, empty stdout. Account catalog and successful inference remain unverified. |
-| `claude` | 2.1.294 | Stream control initialization returned model aliases, resolved IDs and per-model effort levels. Headless prompt failed authentication with exit 1 and `is_error: true`, despite `subtype: "success"`. Successful inference remains unverified. |
+| `claude` | 2.1.294 | Stream control initialization returned model aliases, resolved IDs and per-model effort levels. Headless prompt failed authentication with exit 1 and `is_error: true`, despite `subtype: "success"`. After login, Sonnet 5.5/high JSON and Haiku 5.5/low streaming returned exit 0, expected answer, `is_error: false`, `terminal_reason: "completed"`, `stop_reason: "end_turn"`, usage and allowance events. |
 | `agy` | 1.3.1 | Model listing, JSON and streaming inference, and `/usage` succeeded. Invalid effort and conflicting suffix/effort failed with exit 1 plus structured ERROR before inference. Help says timeout default is unbounded, unlike the fetched guide; skills set it explicitly. |
 | `opencode` | 1.18.35 | Refreshed free-model list and loopback `/config/providers` returned current IDs/capabilities/variants. `opencode/space-bunny-free` and `opencode/ling-3.1-flash-free` at `low` both returned exit 0, the expected answer, final `step_finish`/`stop`, usage and zero reported cost. No OpenAI provider was configured. Invalid provider emitted an error event and exit 1. Earlier default and local requests missed 55/25-second deadlines; those did not prove exhaustion. |
 
@@ -55,6 +55,14 @@ Sonnet 5.5, Haiku 5.5 and Fable 5.1. Antigravity's fetched slugs here used low,
 medium and high (some families offered fewer). OpenCode's configured providers
 had different per-model variant sets, and local Qwen entries had no variants.
 These are dated observations, not a permanent cross-provider compatibility table.
+
+Claude's authenticated checks also exposed `json --verbose` as an event array,
+whereas `stream-json --verbose` emitted JSONL. The terminal result must be selected
+after normalizing that shape. Its `rate_limit_event.rate_limit_info` reported
+allowed status and five-hour/seven-day utilization/reset windows; disabled
+overage did not prevent completion. Startup confirmed model resolution and
+`per_turn_effort_active`, but did not echo an effective effort level. The requested
+efforts were accepted; their exact effective values remain unverified.
 
 ## Caller contract
 
@@ -93,6 +101,6 @@ nested-source selection and flat-target symlink preflight.
   [server API](https://opencode.ai/docs/server/).
 
 The installed help and observed protocol take precedence over stale examples.
-Successful inference after Cursor/Claude login and actual quota/context-limit
+Successful inference after Cursor login and actual quota/context-limit
 envelopes remain future validation opportunities;
 the skills explicitly describe these limits rather than presenting them as tested.

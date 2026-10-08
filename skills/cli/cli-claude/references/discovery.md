@@ -37,4 +37,7 @@ and the `/model` picker; don't claim the probe validated an unavailable provider
 
 On 2026-10-08, aliases `opus`, `sonnet`, `haiku`, `fable` resolved to Opus 5.5,
 Sonnet 5.5, Haiku 5.5, Fable 5.1. All four returned five effort levels, `low` through
-`max`. Authentication failure still prevented the subsequent inference smoke test.
+`max`. Older Opus/Sonnet 4.6 exposed four levels without `xhigh`; Haiku 4.5
+returned no effort capability fields. After authentication, Sonnet 5.5/high and
+Haiku 5.5/low completed live requests. Startup output verified the resolved model
+and that per-turn effort was active, but did not echo the effective effort level.
