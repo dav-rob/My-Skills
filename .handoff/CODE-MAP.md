@@ -11,6 +11,11 @@
 - `skills/exact-address/SKILL.md`: canonical renamed address-finding skill.
 - `skills/fine-grained-commits/`: commit/push workflow and agent metadata.
 - `skills/handoff/SKILL.md`: repository handoff workflow.
+- `skills/cli/cli-*/SKILL.md`: five native CLI invocation/model/effort/feedback
+  guides, grouped in source but installed as flat cli-* folders. Codex/Claude
+  discovery protocol details are supporting references within each skill.
+- `docs/CLI-SKILLS.md`: pinned research candidates, installed-binary checks and
+  verification limits for the CLI collection.
 - `skills/mac-login/SKILL.md`: scoped Mac Keychain website-login workflow and
   the tested native Chrome paste method. `scripts/credentials.py` inside the
   skill is its standalone setup/check/clipboard helper; nine isolated regressions

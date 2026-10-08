@@ -31,3 +31,19 @@ exact-address appear as Global in Settings → Customizations.
 Conclusion: Use the surface-specific target and verify app discovery. The old
 slash-command picker initially remained stale even after installation; the
 Customizations screen showed the newly loaded skill.
+
+What was tried: Treating local gh install selection as remote path selection.
+Why: Verify the grouped CLI skills before publishing.
+What happened: --from-local with skills/cli/cli-codex/SKILL.md was not found;
+selecting cli-codex succeeded. Remote pinned exact-path selection also succeeded,
+but its listing identity was scoped rather than flat.
+Conclusion: Preserve exact remote path selection for audited installs and handle
+scope metadata in uninstall; don't switch to local copying to hide the namespace.
+
+What was tried: Short OpenCode smoke deadlines and interpreting startup-only output.
+Why: Bound CLI validation cost and duration.
+What happened: Default/free and local requests emitted only start events within
+short deadlines. Explicit discovered free models later completed, and local
+Qwen3.6 needed a longer deadline. Qwen3.8 still missed 90 seconds.
+Conclusion: Refresh discovery, pin a selected model, and distinguish timeout from
+authentication/quota errors. Start events never establish success.

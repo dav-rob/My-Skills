@@ -71,3 +71,19 @@ Consequences: Only paths beneath HOME; no traversal/control characters or overla
 Atomic mode-0600 config writes; all roots checked before writes/deletion, then
 rechecked per destination. Existing skill trees with links cannot be overwritten.
 Path removal can still disable a registered root that subsequently became a link.
+
+Decision: Keep CLI skills grouped under skills/cli in source and named cli-*.
+Reason: The user requested source organization and flat installation names.
+Alternatives considered: Nested installed directories; copying catalog skills unchanged.
+Consequences: Instructions are independently authored from reviewed candidates,
+official docs and local checks. Per-tool discovery replaces static model catalogs;
+YOLO flags respect the user's authorization. Quota counts and error contracts
+remain tool-specific; successful inference is only claimed where observed.
+
+Decision: Accept one safe source scope in gh uninstall identities.
+Reason: Pinned remote installation of skills/cli/cli-codex keeps its flat folder
+and frontmatter name, but gh list derives cli/cli-codex from github-path metadata.
+Alternatives considered: Stripping source metadata; accepting arbitrary name paths.
+Consequences: Flat-name uninstall works with a lowercase slug scope, retaining
+exact leaf/parent preflight. Source metadata and pins are preserved; native list
+may still show scope/name. Traversal and multi-component identities aren't stripped.

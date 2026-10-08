@@ -1,30 +1,30 @@
 # Current
 
-The configurable installation-path request is complete. `29424e8` is pushed on
-main and the local `~/.local/bin/skillstrap.sh` was updated with the requested
-curl bootstrap, then verified byte-for-byte against the tested source.
+Five CLI skills are prepared under `skills/cli/`: cli-codex, cli-cursor,
+cli-claude, cli-antigravity and cli-opencode. They were researched through
+OMGSkills and official sources, independently written, and checked against
+installed binaries. They cover native model/effort discovery, authorized YOLO
+options, deadlines and caller-visible completion/errors/usage. See
+`docs/CLI-SKILLS.md` for pinned candidate sources and verification limits.
 
-`paths [list]`, `paths add <directory>` and `paths remove <directory>` manage a
-complete active list in `~/.config/skillstrap/install-paths`. Without that file,
-defaults cover the seven existing tool directories plus `~/.scheduled-jobs/skills`.
-Install, list and uninstall use the same active list through gh's `--dir` option.
-Removing a path leaves its skills in place and excludes it from future operations.
-Bootstrap does not install skills or alter saved path configuration.
+Implementation is pushed as `3c9c00e`, `6ea908e` and `5e51d21`. The source grouping
+installs flat; all five are installed in all eight configured paths (40 copies).
+gh reports remote scope/name identities from source metadata;
+uninstall accepts a single safe source scope while retaining exact target/parent
+checks. The local skillstrap command was updated by curl bootstrap and matches
+the repository. 49 offline tests passed under sh and dash; format/static checks,
+nested local/remote packaging and live flat-name uninstall also passed.
 
-45 offline tests pass under sh and dash (36 distribution tests and nine isolated
-credential-helper tests). Syntax/diff checks pass. Live GitHub CLI 2.101.0 checks
-in a temporary HOME verified eight-directory installation, pinned metadata,
-listing, add/remove persistence, excluded-path preservation, and custom-path
-install/uninstall. The real installed command lists all eight defaults, including
-scheduled jobs; existing real skill installations were not changed in this task.
+Codex (GPT-6.1 Sol/high), Antigravity (Gemini 3.8 Flash/high), two discovered
+OpenCode free models at low effort, and oMLX Qwen 3.6 completed smoke requests.
+Qwen 3.8 didn't finish within 90 seconds. Cursor and Claude need authentication;
+the user was given login commands and offered to authenticate them. Their
+successful inference checks can be completed when the user confirms login.
+Never claim real quota/context exhaustion was induced or verified.
 
-The vision remains distribution from any GitHub repository to every compatible
-tool, with safety and security as the primary goals. Keep explicit skill selection,
-compact conservative audits, pinned installs and complete destination preflight.
-Registered paths must be beneath HOME without traversal or symlinked components;
-existing skill trees containing links are refused during overwrite. Sequential
-installation can still leave earlier destinations installed if a later gh call fails.
-Static audits remain incomplete; no broader security claim is established.
-
-No outstanding requested work. Other repository skills include exact-address,
-fine-grained-commits, handoff and the direct dedicated-Keychain mac-login workflow.
+Configurable install paths remain as implemented in `29424e8`: eight defaults
+including scheduled jobs, saved active-list configuration, explicit selection,
+audited commit pins, and complete destination preflight. Removing a path leaves
+its content in place. Bootstrap installs the command only. The vision remains
+any GitHub source and every compatible tool, with safety and security foremost.
+Static audits remain incomplete and sequential installs may partially succeed.
