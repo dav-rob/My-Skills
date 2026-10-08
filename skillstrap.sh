@@ -6,7 +6,7 @@ SELF_URL="https://raw.githubusercontent.com/dav-rob/My-Skills/main/skillstrap.sh
 BIN_DIR="$HOME/.local/bin"
 BIN_PATH="$BIN_DIR/skillstrap.sh"
 ZSHRC="$HOME/.zshrc"
-AGENTS="opencode codex claude-code cursor antigravity antigravity2.0 antigravity-cli"
+PATHS_FILE="$HOME/.config/skillstrap/install-paths"
 GH_PROMPT_DISABLED=1
 GH_PAGER=cat
 export GH_PROMPT_DISABLED GH_PAGER
@@ -28,18 +28,152 @@ Usage:
   skillstrap.sh install <owner/repo> <skill|--all>
   skillstrap.sh uninstall <skill>
   skillstrap.sh list
+  skillstrap.sh paths [list]
+  skillstrap.sh paths add <directory>
+  skillstrap.sh paths remove <directory>
   skillstrap.sh help
 
 No arguments installs/updates only the skillstrap.sh command itself and ensures
 ~/.local/bin is on PATH. It never installs skills implicitly.
 
 --dry-run audits without installing.
-install audits first, then installs the named skill (or --all) for OpenCode,
-Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI
-at user scope.
-uninstall removes every user-scope installation with that exact skill name.
+install audits first, then installs the named skill (or --all) in each configured
+directory. Defaults cover seven agents plus ~/.scheduled-jobs/skills.
+uninstall removes installations with that exact name in configured directories.
+list includes skills in configured directories.
+paths lists, adds or removes install directories beneath HOME. Changes persist in
+~/.config/skillstrap/install-paths. Removing a path does not delete its contents.
 USAGE
 }
+
+default_install_paths() {
+  for directory in .config/opencode/skills .agents/skills .claude/skills \
+    .cursor/skills .gemini/antigravity/skills .gemini/config/skills \
+    .gemini/antigravity-cli/skills .scheduled-jobs/skills; do
+    printf '%s\n' "$HOME/$directory"
+  done
+}
+
+normalize_install_path() (
+  path="$1"
+  case "$path" in
+    *'
+'*) return 1 ;;
+  esac
+  if printf '%s' "$path" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    return 1
+  fi
+  home_real="$(cd "$HOME" && pwd -P)" || return 1
+  [ "$home_real" != / ] || return 1
+  path="${path%/}"
+  case "$path" in
+    "$HOME"/*) relative="${path#"$HOME"/}" ;;
+    "$home_real"/*) relative="${path#"$home_real"/}" ;;
+    '~/'*) relative="${path#'~/'}" ;;
+    *) return 1 ;;
+  esac
+  case "/$relative/" in
+    *'/../'*|*'/./'*|*'//'*) return 1 ;;
+  esac
+  [ -n "$relative" ] || return 1
+  printf '%s\n' "$HOME/$relative"
+)
+
+check_install_directory() (
+  path="$(normalize_install_path "$1")" || return 1
+  relative="${path#"$HOME"/}"
+  current="$HOME"
+  # Check each existing component, including the root itself. Missing directories
+  # are allowed; installation creates them only after the audit passes.
+  while [ -n "$relative" ]; do
+    component="${relative%%/*}"
+    current="$current/$component"
+    [ ! -L "$current" ] || return 1
+    if [ -e "$current" ]; then
+      [ -d "$current" ] || return 1
+    fi
+    case "$relative" in
+      */*) relative="${relative#*/}" ;;
+      *) relative="" ;;
+    esac
+  done
+)
+
+read_install_paths() (
+  check_install_directory "${PATHS_FILE%/*}" || fail "unsafe install-path configuration directory"
+  [ ! -L "$PATHS_FILE" ] || fail "install-path configuration must not be a symbolic link"
+  if [ ! -e "$PATHS_FILE" ]; then
+    default_install_paths
+    exit
+  fi
+  [ -f "$PATHS_FILE" ] && [ -r "$PATHS_FILE" ] || fail "could not read install-path configuration"
+  controls_rc=0
+  LC_ALL=C grep -aq '[[:cntrl:]]' "$PATHS_FILE" || controls_rc=$?
+  [ "$controls_rc" -eq 1 ] || fail "could not read install-path configuration or it contains control characters"
+  paths=""
+  while IFS= read -r entry || [ -n "$entry" ]; do
+    path="$(normalize_install_path "$entry")" || fail "invalid configured install path"
+    while IFS= read -r existing; do
+      [ -n "$existing" ] || continue
+      case "$path/" in "$existing/"*) fail "duplicate or overlapping install paths" ;; esac
+      case "$existing/" in "$path/"*) fail "overlapping install paths" ;; esac
+    done <<EOF_EXISTING_PATHS
+$paths
+EOF_EXISTING_PATHS
+    paths="${paths}${paths:+
+}$path"
+  done < "$PATHS_FILE"
+  [ -z "$paths" ] || printf '%s\n' "$paths"
+)
+
+manage_paths() (
+  action="$1"
+  paths="$(read_install_paths)" || exit 1
+  if [ "$action" = list ]; then
+    [ -z "$paths" ] || printf '%s\n' "$paths"
+    exit
+  fi
+  path="$(normalize_install_path "$2")" || fail "install path must be a directory beneath HOME without traversal or control characters"
+  updated=""
+  found=0
+  while IFS= read -r existing; do
+    [ -n "$existing" ] || continue
+    if [ "$existing" = "$path" ]; then
+      found=1
+      [ "$action" != remove ] || continue
+    elif [ "$action" = add ]; then
+      case "$path/" in "$existing/"*) fail "install paths must not overlap" ;; esac
+      case "$existing/" in "$path/"*) fail "install paths must not overlap" ;; esac
+    fi
+    updated="${updated}${updated:+
+}$existing"
+  done <<EOF_PATHS
+$paths
+EOF_PATHS
+  if [ "$action" = add ]; then
+    check_install_directory "$path" || fail "install path has a symbolic link or non-directory component"
+    if [ "$found" -eq 1 ]; then
+      say "Install path already configured: $path"
+      exit
+    fi
+    updated="${updated}${updated:+
+}$path"
+  else
+    [ "$found" -eq 1 ] || fail "install path is not configured"
+  fi
+  umask 077
+  mkdir -p "${PATHS_FILE%/*}"
+  tmp_paths="$(mktemp "${PATHS_FILE%/*}/.install-paths.XXXXXX")"
+  trap 'rm -f "$tmp_paths"' 0
+  trap 'exit 1' HUP INT TERM
+  [ -z "$updated" ] || printf '%s\n' "$updated" > "$tmp_paths"
+  mv "$tmp_paths" "$PATHS_FILE"
+  case "$action" in
+    add) say "Added install path: $path" ;;
+    remove) say "Removed install path: $path" ;;
+  esac
+  say "Existing skills were not changed."
+)
 
 need() {
   command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
@@ -392,56 +526,91 @@ audit() (
     else
       selection="$(cat "$tmp/selected-skill")" || fail "could not identify audited skill"
     fi
-    install_for_agents "$repo" "$selection" "$commit" || return 1
+    install_for_paths "$repo" "$selection" "$commit" "$tmp/repo" || return 1
   fi
   return "$rc"
 )
 
-install_for_agents() (
+check_install_target() (
+  directory="$1"
+  name="$2"
+  check_install_directory "$directory" || return 1
+  target="$directory/$name"
+  [ ! -L "$target" ] || return 1
+  if [ -e "$target" ]; then
+    [ -d "$target" ] || return 1
+    # gh --force writes into existing trees. Refuse links inside them as well.
+    links="$(find "$target" -type l -print)" || return 1
+    [ -z "$links" ] || return 1
+  fi
+)
+
+install_for_paths() (
   repo="$1"
   skill="$2"
   commit="$3"
+  clone="$4"
+  paths="$(read_install_paths)" || exit 1
+  [ -n "$paths" ] || fail "no install paths configured; use paths add <directory>"
+  if [ "$skill" = --all ]; then
+    names="$(find "$clone" -type f -name SKILL.md -not -path '*/.git/*' -exec dirname {} \; | sed 's|.*/||' | LC_ALL=C sort -u)"
+  else
+    directory="${skill%/SKILL.md}"
+    names="${directory##*/}"
+  fi
 
-  for agent in $AGENTS; do
-    say "Installing for $agent"
+  # Validate all destinations before the first write, then recheck each one.
+  while IFS= read -r path; do
+    while IFS= read -r name; do
+      check_install_target "$path" "$name" || fail "unsafe install destination: $path"
+    done <<EOF_NAMES
+$names
+EOF_NAMES
+  done <<EOF_PATHS
+$paths
+EOF_PATHS
+  while IFS= read -r path; do
+    while IFS= read -r name; do
+      check_install_target "$path" "$name" || fail "install destination changed: $path"
+    done <<EOF_NAMES
+$names
+EOF_NAMES
+    say "Installing in $path"
     if [ "$skill" = "--all" ]; then
-      gh skill install "$repo" --all --pin "$commit" --agent "$agent" --scope user --force || fail "installation failed for $agent; earlier agents may already be installed"
+      gh skill install "$repo" --all --pin "$commit" --dir "$path" --force || fail "installation failed in $path; earlier paths may already be installed"
     else
-      gh skill install "$repo" "$skill" --pin "$commit" --agent "$agent" --scope user --force || fail "installation failed for $agent; earlier agents may already be installed"
+      gh skill install "$repo" "$skill" --pin "$commit" --dir "$path" --force || fail "installation failed in $path; earlier paths may already be installed"
     fi
-  done
+  done <<EOF_PATHS
+$paths
+EOF_PATHS
 )
 
 safe_user_skill_path() (
   skill="$1"
   path="$2"
-  home_real="$(cd "$HOME" && pwd -P)" || return 1
-  [ "$home_real" != / ] || return 1
+  paths="$3"
+  path="$(normalize_install_path "$path")" || return 1
+  [ "${path##*/}" = "$skill" ] || return 1
+  parent="${path%/*}"
+  printf '%s\n' "$paths" | grep -Fqx "$parent" || return 1
+  check_install_directory "$parent" || return 1
+  # Check parents, never the leaf: deleting an installed symlink removes it only.
+  printf '%s\n' "$path"
+)
 
-  case "$path" in
-    "$HOME"/*) relative="${path#"$HOME"/}" ;;
-    "$home_real"/*) relative="${path#"$home_real"/}" ;;
-    "~/"*) relative="${path#'~/'}" ;;
-    /*) return 1 ;;
-    *) relative="${path#./}" ;;
-  esac
-  case "/$relative/" in
-    *'/../'*|*'/./'*|*'//'*) return 1 ;;
-  esac
-  [ "${relative##*/}" = "$skill" ] || return 1
-  parent="${relative%/*}"
-  case "$parent" in
-    .agents/skills|.codex/skills|.claude/skills|.cursor/skills|\
-    .config/opencode/skills|.gemini/antigravity/skills|\
-    .gemini/antigravity-cli/skills|.gemini/config/skills|\
-    .gemini/config/plugins/My-Skills/skills) : ;;
-    *) return 1 ;;
-  esac
-
-  parent_real="$(cd "$HOME/$parent" && pwd -P)" || return 1
-  # Resolve parents, never the leaf: deleting an installed symlink removes it only.
-  [ "$parent_real" = "$home_real/$parent" ] || return 1
-  printf '%s\n' "$HOME/$relative"
+list_skills() (
+  check_gh_skill
+  paths="$(read_install_paths)" || exit 1
+  [ -n "$paths" ] || { say "No install paths configured."; exit; }
+  while IFS= read -r path; do
+    check_install_directory "$path" || fail "unsafe install directory: $path"
+    [ -d "$path" ] || continue
+    say "Skills in $path"
+    gh skill list --dir "$path" || fail "could not list installed skills"
+  done <<EOF_PATHS
+$paths
+EOF_PATHS
 )
 
 uninstall_skill() (
@@ -457,6 +626,7 @@ uninstall_skill() (
     fail "skill name contains control characters"
   fi
   check_gh_skill
+  paths="$(read_install_paths)" || exit 1
 
   tmp_uninstall="$(mktemp -d "${TMPDIR:-/tmp}/skillstrap-uninstall.XXXXXX")" || fail "could not create uninstall directory"
   trap 'rm -rf "$tmp_uninstall"' 0
@@ -465,25 +635,33 @@ uninstall_skill() (
   seen="$tmp_uninstall/paths"
   : > "$seen"
 
-  gh skill list --scope user \
-    --json skillName,path \
-    --template '{{range .}}{{if or (regexMatch "[[:cntrl:]]" .skillName) (regexMatch "[[:cntrl:]]" .path)}}INVALID{{else}}{{printf "%s\t%s" .skillName .path}}{{end}}{{"\n"}}{{end}}' \
-    > "$rows" || fail "could not list installed skills"
+  : > "$rows"
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    check_install_directory "$path" || fail "unsafe uninstall directory: $path"
+    [ -d "$path" ] || continue
+    gh skill list --dir "$path" \
+      --json skillName,path \
+      --template '{{range .}}{{if or (regexMatch "[[:cntrl:]]" .skillName) (regexMatch "[[:cntrl:]]" .path)}}INVALID{{else}}{{printf "%s\t%s" .skillName .path}}{{end}}{{"\n"}}{{end}}' \
+      >> "$rows" || fail "could not list installed skills"
+  done <<EOF_PATHS
+$paths
+EOF_PATHS
 
   # Validate the complete removal set before deleting the first installation.
   while IFS="$(printf '\t')" read -r name path; do
     [ "$name" != INVALID ] || fail "installed skill list contains control characters"
     [ "$name" = "$skill" ] || continue
-    abs="$(safe_user_skill_path "$skill" "$path")" || fail "refusing unsafe uninstall path reported by gh"
+    abs="$(safe_user_skill_path "$skill" "$path" "$paths")" || fail "refusing unsafe uninstall path reported by gh"
     if ! grep -Fqx "$abs" "$seen"; then
       printf '%s\n' "$abs" >> "$seen"
     fi
   done < "$rows"
-  [ -s "$seen" ] || fail "no user-scope skill named '$skill' is installed"
+  [ -s "$seen" ] || fail "no skill named '$skill' is installed in configured paths"
 
   while IFS= read -r abs; do
     # Recheck parents immediately before removal as well as during preflight.
-    safe_user_skill_path "$skill" "$abs" >/dev/null || fail "uninstall path changed during removal"
+    safe_user_skill_path "$skill" "$abs" "$paths" >/dev/null || fail "uninstall path changed during removal"
     say "Removing $skill"
     say "  $abs"
     if [ -L "$abs" ] || [ -f "$abs" ]; then
@@ -527,8 +705,20 @@ case "${1:-}" in
     ;;
   list)
     [ "$#" -eq 1 ] || fail "usage: skillstrap.sh list"
-    check_gh_skill
-    gh skill list --scope user
+    list_skills
+    ;;
+  paths)
+    case "${2:-list}" in
+      list)
+        [ "$#" -le 2 ] || fail "usage: skillstrap.sh paths [list]"
+        manage_paths list
+        ;;
+      add|remove)
+        [ "$#" -eq 3 ] || fail "usage: skillstrap.sh paths <add|remove> <directory>"
+        manage_paths "$2" "$3"
+        ;;
+      *) fail "usage: skillstrap.sh paths [list|add <directory>|remove <directory>]" ;;
+    esac
     ;;
   help|-h|--help)
     usage

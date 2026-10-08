@@ -5,7 +5,8 @@ can use them, as safely and securely as possible. Safety and security are the
 primary design goals across auditing, installation, updates and removal.
 
 The current implementation is `skillstrap.sh`, a GitHub CLI wrapper supporting
-OpenCode, Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0 and Antigravity CLI.
+OpenCode, Codex, Claude Code, Cursor, Antigravity, Antigravity 2.0, Antigravity CLI
+and scheduled jobs, with configurable installation directories.
 This repository also contains a personal skill collection; it is one source
 among the repositories the manager can install from. The current target list
 and static audit are an initial implementation of the broader vision.
@@ -32,6 +33,9 @@ skillstrap.sh install dav-rob/My-Skills exact-address # install one skill
 skillstrap.sh install dav-rob/My-Skills --all         # explicitly install all
 skillstrap.sh uninstall "exact address"              # exact legacy name only
 skillstrap.sh list
+skillstrap.sh paths                                 # list install directories
+skillstrap.sh paths add "$HOME/.other-tool/skills"
+skillstrap.sh paths remove "$HOME/.other-tool/skills"
 ```
 
 Every install validates Agent Skills format and runs a conservative static audit
@@ -41,10 +45,46 @@ without printing skill bodies or untrusted validator diagnostics. Files over
 audit. This scan catches obvious suspicious patterns; it is not complete malware
 detection and needs no installed auditor skill.
 
-Installs overwrite the selected skills at user scope for all seven targets and pin
+Installs overwrite the selected skills in every configured directory and pin
 them to the audited commit. Named installs use the exact audited repository path.
-Rerun an explicit install to audit and install a newer revision. If an agent's
-install fails, the command stops; installations for earlier agents may remain.
+Rerun an explicit install to audit and install a newer revision. If installation
+in one directory fails, the command stops; earlier installations may remain.
+
+## Installation paths
+
+`skillstrap.sh paths` (or `paths list`) prints the active directories, one per line.
+The defaults are:
+
+| Tool | Directory |
+| --- | --- |
+| OpenCode | `~/.config/opencode/skills` |
+| Codex | `~/.agents/skills` |
+| Claude Code | `~/.claude/skills` |
+| Cursor | `~/.cursor/skills` |
+| Antigravity | `~/.gemini/antigravity/skills` |
+| Antigravity 2.0 | `~/.gemini/config/skills` |
+| Antigravity CLI | `~/.gemini/antigravity-cli/skills` |
+| Scheduled jobs | `~/.scheduled-jobs/skills` |
+
+`paths add <directory>` and `paths remove <directory>` save the complete active
+list in `~/.config/skillstrap/install-paths`. Adding an existing path is harmless.
+You can remove default paths as well as custom ones; command updates preserve the
+saved list. Adding a path does not install existing skills there. Removing a path
+stops future installs, listing and uninstalls there without deleting its contents.
+Re-add it to manage any remaining skills. An empty saved list disables installation.
+Path commands need no GitHub CLI or authentication and do not create skill roots.
+
+Use absolute paths or quoted `~/...` paths beneath your home directory. Spaces
+are supported. Home itself, paths outside home, traversal, control characters,
+overlapping directories and symlinked directory components are refused. Choose
+directories dedicated to skills. Configuration is read as data, never shell code,
+and saved atomically with private permissions.
+
+Installation uses [GitHub CLI's custom-directory option](https://cli.github.com/manual/gh_skill_install)
+and validates all destinations before writing. Existing skill trees containing
+symlinks are refused rather than followed during overwrite. `list` and uninstall
+scan each active directory using [GitHub CLI's directory listing](https://cli.github.com/manual/gh_skill_list),
+including locations its default agent scan would miss.
 
 Antigravity 2.0 uses `~/.gemini/config/skills`; the older Antigravity target uses
 `~/.gemini/antigravity/skills`, and the CLI uses `~/.gemini/antigravity-cli/skills`.
@@ -52,12 +92,12 @@ The `antigravity2.0` target installs plain skills into the newer directory, with
 creating a plugin. See [Google's skill locations](https://www.antigravity.google/docs/skills?tab=ide)
 and [GitHub CLI's target mappings](https://github.com/cli/cli/blob/v2.101.0/internal/skills/registry/registry.go).
 
-Uninstall uses the exact installed name reported by `gh skill list --scope user`.
+Uninstall uses the exact installed name reported by `gh skill list --dir <directory>`.
 It validates every matching path before removing any installation, allows only
-recognised skill directories beneath the home directory, rejects traversal and
+configured skill directories beneath the home directory, rejects traversal and
 symlinked parents, and removes a leaf symlink without deleting its target.
-`exact address` and `exact-address` are separate names. Unknown/custom locations
-are refused rather than deleted.
+`exact address` and `exact-address` are separate names. Unconfigured locations
+are not scanned or removed.
 
 ## Checks
 

@@ -8,7 +8,9 @@ import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'skillstrap.sh'
-AGENTS = ['opencode', 'codex', 'claude-code', 'cursor', 'antigravity', 'antigravity2.0', 'antigravity-cli']
+DIRECTORIES = ['.config/opencode/skills', '.agents/skills', '.claude/skills', '.cursor/skills',
+               '.gemini/antigravity/skills', '.gemini/config/skills',
+               '.gemini/antigravity-cli/skills', '.scheduled-jobs/skills']
 
 SHIM = r'''#!/usr/bin/env python3
 import json, os, pathlib, shutil, subprocess, sys
@@ -30,8 +32,14 @@ elif args[:2] == ['skill', 'publish']:
         print('error: invalid description: DO_NOT_PRINT_UNTRUSTED_CONTENT')
         sys.exit(1)
 elif args[:2] == ['skill', 'list']:
+    if (state / 'list-fails').exists():
+        sys.exit(1)
     rows = json.loads((state / 'rows.json').read_text())
     for name, path in rows:
+        expanded = path.replace('~/', os.environ['HOME'] + '/', 1)
+        if '--dir' in args and not (state / 'report-unfiltered').exists():
+            if str(pathlib.Path(expanded).parent) != args[args.index('--dir') + 1]:
+                continue
         if (state / 'report-stale').exists() or pathlib.Path(path.replace('~/', os.environ['HOME'] + '/', 1)).exists():
             if any(ord(c) < 32 or ord(c) == 127 for c in name + path):
                 print('INVALID')
@@ -143,13 +151,14 @@ class SkillstrapTests(unittest.TestCase):
         self.assertNotIn('DO_NOT_PRINT_UNTRUSTED_CONTENT', out)
         self.assertFalse(self.installs())
 
-    def test_named_install_is_pinned_for_all_seven_agents(self):
+    def test_named_install_is_pinned_for_all_default_paths(self):
         self.skill()
         self.skill('other')
         self.run_cli('install', 'test/source', 'safe')
         calls = self.installs()
-        self.assertEqual(len(calls), 7)
-        self.assertEqual([c[c.index('--agent') + 1] for c in calls], AGENTS)
+        self.assertEqual(len(calls), 8)
+        self.assertEqual([c[c.index('--dir') + 1] for c in calls],
+                         [str(self.home / d) for d in DIRECTORIES])
         for call in calls:
             self.assertIn('skills/safe/SKILL.md', call)
             self.assertNotIn('--all', call)
@@ -162,7 +171,7 @@ class SkillstrapTests(unittest.TestCase):
         self.run_cli('install', 'test/source', '', ok=False)
         self.assertFalse(self.installs())
         self.run_cli('install', 'test/source', '--all')
-        self.assertEqual(len(self.installs()), 7)
+        self.assertEqual(len(self.installs()), 8)
         self.assertTrue(all('--all' in c and '--pin' in c for c in self.installs()))
 
     def test_missing_skill_and_duplicate_names_fail(self):
@@ -202,11 +211,11 @@ class SkillstrapTests(unittest.TestCase):
                 self.run_cli('install', 'test/source', 'safe', ok=False)
         self.assertFalse(self.installs())
 
-    def test_install_error_names_agent_and_stops(self):
+    def test_install_error_names_path_and_stops(self):
         self.skill()
         (self.state / 'install-fails').touch()
         out = self.run_cli('install', 'test/source', 'safe', ok=False)
-        self.assertIn('installation failed for opencode', out)
+        self.assertIn('installation failed in ' + str(self.home / DIRECTORIES[0]), out)
         self.assertEqual(len(self.installs()), 1)
 
     def installed(self, name, directory='.agents/skills'):
@@ -219,9 +228,7 @@ class SkillstrapTests(unittest.TestCase):
         (self.state / 'rows.json').write_text(json.dumps([(name, str(path)) for name, path in rows]))
 
     def test_uninstall_legacy_name_preserves_replacement_and_lists_result(self):
-        directories = ['.config/opencode/skills', '.agents/skills', '.claude/skills',
-                       '.cursor/skills', '.gemini/antigravity/skills', '.gemini/config/skills',
-                       '.gemini/antigravity-cli/skills']
+        directories = DIRECTORIES
         old = [self.installed('exact address', d) for d in directories]
         new = [self.installed('exact-address', d) for d in directories]
         self.report([('exact address', p) for p in old] + [('exact-address', p) for p in new])
@@ -244,6 +251,7 @@ class SkillstrapTests(unittest.TestCase):
         unsafe = self.home / 'documents/skills/safe'
         unsafe.mkdir(parents=True)
         self.report([('safe', safe), ('safe', unsafe)])
+        (self.state / 'report-unfiltered').touch()
         self.run_cli('uninstall', 'safe', ok=False)
         self.assertTrue(safe.is_dir())
         self.assertTrue(unsafe.is_dir())
@@ -251,6 +259,8 @@ class SkillstrapTests(unittest.TestCase):
     def test_uninstall_refuses_traversal_and_outside_home(self):
         victim = self.base / 'outside/skills/safe'
         victim.mkdir(parents=True)
+        (self.home / '.agents/skills').mkdir(parents=True)
+        (self.state / 'report-unfiltered').touch()
         for path in [victim, str(self.home) + '/../outside/skills/safe',
                      str(self.home) + '/.agents/skills/../../../outside/skills/safe']:
             with self.subTest(path=path):
@@ -283,9 +293,164 @@ class SkillstrapTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.run_cli('uninstall', name, ok=False)
 
-    def test_list_forwards_user_scope(self):
-        self.run_cli('list')
-        self.assertIn(['gh', 'skill', 'list', '--scope', 'user'], self.calls())
+    def test_list_includes_scheduled_and_custom_paths(self):
+        custom = self.home / 'my tool/skills'
+        self.run_cli('paths', 'add', str(custom))
+        standard = self.installed('standard')
+        scheduled = self.installed('scheduled', '.scheduled-jobs/skills')
+        extra = self.installed('extra', 'my tool/skills')
+        self.report([('standard', standard), ('scheduled', scheduled), ('extra', extra)])
+        out = self.run_cli('list')
+        for name in ['standard', 'scheduled', 'extra']:
+            self.assertIn(name, out)
+        self.assertIn(['gh', 'skill', 'list', '--dir', str(custom)], self.calls())
+
+    def test_paths_defaults_need_no_gh_and_do_not_create_directories(self):
+        expected = [str(self.home / d) for d in DIRECTORIES]
+        self.assertEqual(self.run_cli('paths').splitlines(), expected)
+        self.assertEqual(self.run_cli('paths', 'list').splitlines(), expected)
+        self.assertFalse(self.calls())
+        self.assertFalse((self.home / '.config').exists())
+
+    def test_path_changes_persist_deduplicate_and_preserve_installed_skills(self):
+        custom = str(self.home / 'my tool/skills')
+        self.run_cli('paths', 'add', custom + '/')
+        self.run_cli('paths', 'add', '~/my tool/skills')
+        self.assertEqual(self.run_cli('paths').splitlines().count(custom), 1)
+        self.assertEqual((self.home / '.config/skillstrap/install-paths').stat().st_mode & 0o777, 0o600)
+        self.skill()
+        self.run_cli('install', 'test/source', 'safe')
+        self.assertEqual(self.installs()[-1][self.installs()[-1].index('--dir') + 1], custom)
+        existing = self.installed('safe', 'my tool/skills')
+        self.run_cli('paths', 'remove', custom)
+        self.assertTrue(existing.is_dir())
+        self.assertNotIn(custom, self.run_cli('paths').splitlines())
+        self.run_cli('paths', 'remove', custom, ok=False)
+        self.run_cli('paths', 'remove', '~/'+DIRECTORIES[0])
+        self.run_cli()
+        self.assertNotIn(str(self.home / DIRECTORIES[0]), self.run_cli('paths').splitlines())
+
+    def test_removed_default_is_excluded_from_install_list_and_uninstall(self):
+        removed = self.installed('safe', '.scheduled-jobs/skills')
+        kept = self.installed('safe')
+        self.report([('safe', removed), ('safe', kept)])
+        self.run_cli('paths', 'remove', str(removed.parent))
+        self.assertNotIn(str(removed), self.run_cli('list'))
+        self.skill()
+        self.run_cli('install', 'test/source', '--all')
+        self.assertEqual(len(self.installs()), 7)
+        self.assertFalse(any(str(removed.parent) in c for c in self.installs()))
+        self.run_cli('uninstall', 'safe')
+        self.assertTrue(removed.is_dir())
+        self.assertFalse(kept.exists())
+
+    def test_uninstall_custom_exact_name_and_leaf_symlink(self):
+        self.run_cli('paths', 'add', '~/my tool/skills')
+        old = self.installed('exact address', 'my tool/skills')
+        replacement = self.installed('exact-address', 'my tool/skills')
+        self.report([('exact address', old), ('exact-address', replacement)])
+        self.run_cli('uninstall', 'exact address')
+        self.assertFalse(old.exists())
+        self.assertTrue(replacement.is_dir())
+        victim = self.base / 'outside'
+        victim.mkdir()
+        link = old.with_name('linked')
+        link.symlink_to(victim, target_is_directory=True)
+        self.report([('linked', link)])
+        self.run_cli('uninstall', 'linked')
+        self.assertFalse(link.is_symlink())
+        self.assertTrue(victim.is_dir())
+
+    def test_invalid_paths_and_overlaps_leave_configuration_unchanged(self):
+        before = self.run_cli('paths')
+        for path in [str(self.base / 'outside'), str(self.home), '/', 'relative/skills', '',
+                     str(self.home / '.agents/../elsewhere/skills'),
+                     str(self.home) + '/.agents//skills', '~/bad\npath', '~/bad\tpath',
+                     str(self.home / '.agents'), str(self.home / '.agents/skills/safe')]:
+            with self.subTest(path=path):
+                self.run_cli('paths', 'add', path, ok=False)
+                self.assertEqual(self.run_cli('paths'), before)
+        file = self.home / 'file'
+        file.touch()
+        self.run_cli('paths', 'add', str(file / 'skills'), ok=False)
+
+    def test_symlinked_custom_root_can_be_removed_but_cannot_be_used(self):
+        self.run_cli('paths', 'add', '~/my tool/skills')
+        outside = self.base / 'outside'
+        outside.mkdir()
+        (self.home / 'my tool').symlink_to(outside, target_is_directory=True)
+        self.run_cli('paths', 'add', '~/my tool/other', ok=False)
+        self.skill()
+        self.run_cli('install', 'test/source', 'safe', ok=False)
+        self.assertFalse(self.installs())
+        self.run_cli('uninstall', 'safe', ok=False)
+        self.run_cli('paths', 'remove', '~/my tool/skills')
+        self.assertTrue(outside.is_dir())
+
+    def test_install_preflights_all_roots_and_existing_skill_symlinks(self):
+        self.skill()
+        (self.home / '.scheduled-jobs').symlink_to(self.base, target_is_directory=True)
+        self.run_cli('install', 'test/source', 'safe', ok=False)
+        self.assertFalse(self.installs())
+        (self.home / '.scheduled-jobs').unlink()
+        existing = self.installed('safe', '.scheduled-jobs/skills')
+        (existing / 'resource').symlink_to(self.base)
+        self.run_cli('install', 'test/source', '--all', ok=False)
+        self.assertFalse(self.installs())
+        (existing / 'resource').unlink()
+        shutil.rmtree(existing)
+        existing.symlink_to(self.base, target_is_directory=True)
+        self.run_cli('install', 'test/source', 'safe', ok=False)
+        self.assertFalse(self.installs())
+
+    def test_uninstall_list_failure_preserves_all_installations(self):
+        old = self.installed('safe')
+        self.report([('safe', old)])
+        (self.state / 'list-fails').touch()
+        self.run_cli('uninstall', 'safe', ok=False)
+        self.assertTrue(old.is_dir())
+
+    def test_configuration_is_data_and_symlinked_configuration_is_refused(self):
+        self.run_cli('paths', 'add', '~/custom/skills')
+        config = self.home / '.config/skillstrap/install-paths'
+        config.write_text('$(touch marker)\n')
+        self.run_cli('paths', ok=False)
+        self.assertFalse((self.home / 'marker').exists())
+        config.write_bytes(str(self.home / 'custom/skills').encode() + b'\x00\n')
+        self.run_cli('paths', ok=False)
+        outside = self.base / 'config'
+        outside.write_text('preserve\n')
+        config.unlink()
+        config.symlink_to(outside)
+        self.run_cli('paths', 'add', '~/another/skills', ok=False)
+        self.assertEqual(outside.read_text(), 'preserve\n')
+
+    def test_configuration_rejects_overlaps_and_reads_last_line_without_newline(self):
+        self.run_cli('paths', 'add', '~/custom/skills')
+        config = self.home / '.config/skillstrap/install-paths'
+        root = str(self.home / 'custom/skills')
+        config.write_text(root)
+        self.assertEqual(self.run_cli('paths').splitlines(), [root])
+        for text in [root + '\n' + root + '\n', root + '\n' + root + '/nested\n']:
+            config.write_text(text)
+            self.run_cli('paths', ok=False)
+
+    def test_empty_configuration_does_not_restore_defaults(self):
+        for directory in DIRECTORIES:
+            self.run_cli('paths', 'remove', str(self.home / directory))
+        self.assertEqual(self.run_cli('paths'), '')
+        self.skill()
+        self.run_cli('install', 'test/source', 'safe', ok=False)
+        self.assertFalse(self.installs())
+        self.assertIn('No install paths', self.run_cli('list'))
+        self.run_cli('paths', 'add', '~/.scheduled-jobs/skills')
+        self.assertEqual(self.run_cli('paths').splitlines(), [str(self.home / '.scheduled-jobs/skills')])
+
+    def test_paths_reject_incorrect_argument_counts(self):
+        for args in [('paths', 'unknown'), ('paths', 'list', 'extra'),
+                     ('paths', 'add'), ('paths', 'remove'), ('paths', '', 'extra')]:
+            with self.subTest(args=args):
+                self.run_cli(*args, ok=False)
 
 if __name__ == '__main__':
     unittest.main()
