@@ -61,8 +61,14 @@ Unknown diagnostics remain unknown; partial edits are inspected before retries.
 Packaging checks passed with the skill-creator validator and `gh skill publish .
 --dry-run`. All five passed skillstrap's existing static scan, and an isolated
 `gh skill install --from-local` check confirmed flat directories, flat reported
-skill names and intact supporting references. The 46-test suite passed under sh
-and dash, including nested-source selection and flat-target symlink preflight.
+skill names and intact supporting references. A pinned remote install also
+preserved the flat directory/frontmatter and supporting references, but gh list
+reported `cli/cli-codex` from source metadata. Skillstrap's uninstall now accepts
+a single safe source scope while enforcing the exact requested flat directory
+and configured parent; arbitrary name paths are not stripped.
+The 49-test suite passed under sh and dash, including scoped-name removal,
+wrong-target and outside-parent refusal, arbitrary reported-name path refusal,
+nested-source selection and flat-target symlink preflight.
 
 ## Primary documentation
 

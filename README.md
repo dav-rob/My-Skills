@@ -122,6 +122,11 @@ its exact audited source path and commit pin. CLI availability/authentication is
 separate from installing the instructions; these skills do not install binaries
 or sign into accounts.
 
+GitHub CLI may display a scoped source identity such as `cli/cli-codex` in its
+listing. The installed folder and skill frontmatter name remain `cli-codex`;
+use `skillstrap.sh uninstall cli-codex`. Uninstall recognizes that single source
+scope while still requiring the exact flat target in a configured directory.
+
 ## Checks
 
 ```sh

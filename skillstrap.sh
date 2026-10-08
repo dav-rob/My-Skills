@@ -651,7 +651,17 @@ EOF_PATHS
   # Validate the complete removal set before deleting the first installation.
   while IFS="$(printf '\t')" read -r name path; do
     [ "$name" != INVALID ] || fail "installed skill list contains control characters"
-    [ "$name" = "$skill" ] || continue
+    if [ "$name" != "$skill" ]; then
+      # gh derives a scope/name display identity from remote github-path metadata,
+      # even though the installed directory and SKILL.md name remain flat.
+      case "$name" in
+        */"$skill")
+          source_scope="${name%/*}"
+          case "$source_scope" in ""|*[!a-z0-9-]*) continue ;; esac
+          ;;
+        *) continue ;;
+      esac
+    fi
     abs="$(safe_user_skill_path "$skill" "$path" "$paths")" || fail "refusing unsafe uninstall path reported by gh"
     if ! grep -Fqx "$abs" "$seen"; then
       printf '%s\n' "$abs" >> "$seen"

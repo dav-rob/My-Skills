@@ -258,6 +258,34 @@ class SkillstrapTests(unittest.TestCase):
         self.assertIn('exact-address', out)
         self.assertNotIn('exact address', out)
 
+    def test_uninstall_flat_name_matches_remote_scope_identity(self):
+        installed = self.installed('cli-codex', '.scheduled-jobs/skills')
+        other = self.installed('cli-cursor', '.scheduled-jobs/skills')
+        self.report([('cli/cli-codex', installed), ('cli/cli-cursor', other)])
+        self.run_cli('uninstall', 'cli-codex')
+        self.assertFalse(installed.exists())
+        self.assertTrue(other.is_dir())
+
+    def test_scoped_identity_cannot_bypass_exact_target_or_parent_checks(self):
+        wrong = self.installed('cli-cursor')
+        self.report([('cli/cli-codex', wrong)])
+        self.run_cli('uninstall', 'cli-codex', ok=False)
+        self.assertTrue(wrong.is_dir())
+        outside = self.home / 'documents/skills/cli-codex'
+        outside.mkdir(parents=True)
+        self.report([('cli/cli-codex', outside)])
+        (self.state / 'report-unfiltered').touch()
+        self.run_cli('uninstall', 'cli-codex', ok=False)
+        self.assertTrue(outside.is_dir())
+
+    def test_uninstall_does_not_strip_arbitrary_reported_name_paths(self):
+        installed = self.installed('cli-codex')
+        for name in ['../cli-codex', 'cli/../cli-codex', '/cli-codex', 'cli/other/cli-codex']:
+            with self.subTest(name=name):
+                self.report([(name, installed)])
+                self.run_cli('uninstall', 'cli-codex', ok=False)
+                self.assertTrue(installed.is_dir())
+
     def test_uninstall_expands_tilde_and_deduplicates(self):
         old = self.installed('exact address')
         self.report([('exact address', '~/'+str(old.relative_to(self.home))), ('exact address', old)])
