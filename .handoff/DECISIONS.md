@@ -34,13 +34,15 @@ Consequences: Bulk format failures survive successful static scans.
 Decision: Preflight all uninstall paths and check physical parent directories.
 Reason: String-prefix checks allow traversal and symlink escapes.
 Alternatives considered: Removing any reported path containing `/skills/`.
-Consequences: Custom/unknown directories are refused; leaf symlinks can be unlinked.
+Consequences: Only active configured directories can be removed; leaf symlinks
+can be unlinked. Each existing parent component is checked for symlinks.
 
 Decision: Include `antigravity2.0` alongside the older Antigravity and CLI targets.
 Reason: gh maps Antigravity 2.0 to `.gemini/config/skills`, while the older target
 uses `.gemini/antigravity/skills`. Installation success alone does not prove app discovery.
 Alternatives considered: Packaging skills as a plugin; dropping the older target.
-Consequences: Seven install targets; uninstall also recognises `.gemini/config/skills`.
+Consequences: Default directories include `.gemini/config/skills` alongside both
+older Antigravity locations; configurable paths now control placement.
 
 Decision: Retire the legacy linker after verifying native app discovery.
 Reason: Antigravity 2.18.1 lists the installed exact-address skill as Global in
@@ -48,3 +50,24 @@ Settings → Customizations. The user agreed to retire the duplicate install rou
 Alternatives considered: Keeping checkout symlinks and a plugin bundle.
 Consequences: `skills/link-skills.sh` is removed; existing user links/plugins are
 not deleted. Future skills use explicit audited skillstrap installs.
+
+
+Decision: Use one persistent active directory list for install, list and uninstall.
+Reason: Scheduled jobs and other tools need directories outside gh's built-in
+agent scan; the user requested commands to list, add and remove paths.
+Alternatives considered: Keeping a separate custom-path append list alongside
+hardcoded agent installs, which would make default-path removal ineffective.
+Consequences: gh `--dir` preserves remote pinned metadata; defaults map the seven
+existing tools plus scheduled jobs. The first add/remove saves the complete list,
+including default removals. Empty configuration disables installation. Removing
+paths never deletes skills; re-add a path to manage skills left there.
+
+Decision: Treat path configuration as private data and preflight installation too.
+Reason: User-selected destinations expand the write/removal boundary. Shell
+configuration execution, traversal, overlapping roots and parent/target links
+could cause unintended writes or deletion.
+Alternatives considered: Accepting arbitrary filesystem paths or following links.
+Consequences: Only paths beneath HOME; no traversal/control characters or overlaps.
+Atomic mode-0600 config writes; all roots checked before writes/deletion, then
+rechecked per destination. Existing skill trees with links cannot be overwritten.
+Path removal can still disable a registered root that subsequently became a link.

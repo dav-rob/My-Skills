@@ -2,87 +2,71 @@
 
 ## Current objective
 
-Latest request complete: focus and generalize `mac-login`. `81dcbc4` is pushed on
-main. Start directly with the local webapp/dedicated Keychain workflow when
-interactive password-manager authentication is unsuitable; omit autofill/vault
-exploration. Personal/site-specific content is removed from the skill and its
-test fixture. See `skills/mac-login/SKILL.md`.
-
-Corrected the vision to distributing skills from any GitHub repository to every
-compatible tool, as safely and securely as possible. Antigravity 2.0 installation
-and discovery support was completed beforehand.
+Completed the user's request to include `~/.scheduled-jobs/skills` in skill
+installation/uninstallation and add commands to list, add and remove install paths.
+Implementation, tests and README are committed and pushed as `29424e8`.
 
 ## What was done
 
-Refocused the existing login skill without changing helper behavior. Nine isolated
-helper tests, format validation and diff checks passed. No real Keychain or browser
-operations were performed for this revision. Installed skill copies were not updated.
+Replaced hardcoded agent install calls with configurable gh `--dir` destinations.
+The eight defaults preserve the previous seven install locations and add scheduled
+jobs. `paths [list]`, `paths add <directory>` and `paths remove <directory>` persist
+the full list in `~/.config/skillstrap/install-paths`. Changes don't install/delete
+skills; removed paths are excluded from install, list and uninstall.
 
-Updated VISION, README and current/decision context to reflect the user's clarified
-scope and security priority. This correction changed documentation only; the
-current implementation still supports seven targets and a static pre-install audit.
-
-Added `antigravity2.0` while retaining older Antigravity and CLI targets. Added
-`.gemini/config/skills` to the uninstall allowlist and expanded regression coverage
-from six to seven destinations. Updated the installed command, installed
-exact-address, verified actual app discovery, and retired the legacy linker.
+Paths are normalized beneath HOME; traversal, controls, overlaps and directory
+symlinks are refused. Config is read as data and atomically saved with private
+permissions. Preflight covers all install destinations and exact-name removals.
+Overwrite also refuses links in existing skill trees. Audited remote commit pins,
+exact named repository paths and command-only bootstrap are preserved.
 
 ## Current state
 
-- 33 tests pass under sh and dash (24 distribution/nine credential-helper);
-  skill format, shell syntax and diff checks pass.
-- During initial packaging, the helper's fresh-process readonly access check
-  passed for a previously authorized website Keychain item. No credential values were
-  printed, no item was modified, and no new browser login/import was performed
-  while packaging the skill. The daily task remains owned by the auction chat.
-- Bootstrap downloaded the pushed script, updated `~/.local/bin/skillstrap.sh`,
-  and was verified byte-for-byte against the repository source.
-- The updated command installed exact-address for all seven targets at `1988bce`.
-- `gh skill list --scope user --agent antigravity2.0` reports the pinned skill at
-  `/Users/davidroberts/.gemini/config/skills/exact-address`.
-- Antigravity 2.18.1 lists exact-address as a Global skill in Settings → Customizations.
-  The app was left on that screen for the user to inspect.
-- Skill execution against a property listing was not tested; this verified discovery.
+- 45 tests pass under sh and dash: 36 distribution and nine credential-helper tests.
+- `sh -n skillstrap.sh` and `git diff --check` pass.
+- Live gh 2.101.0 in a temporary HOME installed exact-address in eight default
+  directories with one pinned version, listed skills, persisted path changes,
+  preserved an excluded installation, and installed/uninstalled a custom path.
+- After pushing, ran the user-requested command:
+  `curl -fsSL https://raw.githubusercontent.com/dav-rob/My-Skills/main/skillstrap.sh | sh`.
+- Installed `~/.local/bin/skillstrap.sh` matches repository source byte-for-byte;
+  `paths` shows eight defaults including `/Users/davidroberts/.scheduled-jobs/skills`,
+  and its `list` command succeeds with the scheduled directory included.
+- Existing real skill content was not modified; scheduled jobs becomes a default
+  destination for the next explicit audited install. No real custom config was needed.
 
 ## Important discoveries
 
-GitHub CLI 2.101.0 has separate `antigravity`, `antigravity2.0` and
-`antigravity-cli` mappings. The old target uses `.gemini/antigravity/skills`, the
-new app uses `.gemini/config/skills`, and the CLI uses `.gemini/antigravity-cli/skills`.
-No plugin bundle is needed. The slash picker initially showed no match; the
-Customizations screen showed the newly installed skill.
+Both gh install and gh list support `--dir`; built-in user-scope listing omits
+arbitrary locations. Source tracking and pinned metadata are preserved with remote
+custom-directory installs. Default Codex placement remains `~/.agents/skills`.
 
 ## Problems / blockers
 
-None for the requested installation/discovery work. Static audits remain
-intentionally incomplete. Unknown uninstall directories are refused. Sequential
-agent installation may leave earlier successful installs when a later one fails.
+None. Paths outside HOME are unsupported. Static scanning is conservative and
+incomplete. A later installation failure may leave earlier destinations installed.
+Shell checks reduce link risks but do not claim filesystem race immunity.
 
 ## Files currently being worked on
 
-Implementation finished: `skillstrap.sh`, `tests/test_skillstrap.py`, `README.md`.
-`skills/link-skills.sh` was removed; existing user links/plugin files were not deleted.
+Implementation complete: `skillstrap.sh`, `tests/test_skillstrap.py`, `README.md`.
+Handoff documentation is a separate follow-up commit.
 
 ## Relevant recent commits
 
-- `81dcbc4`: lead directly with Keychain setup; generalize instructions and scope fixture.
-- `b9abc7a`: add mac-login instructions, parameterized Keychain/clipboard helper
-  and nine isolated regression checks.
-
-- `1988bce`: add Antigravity 2.0 install/uninstall support, tests and usage docs.
-- `be59bd2`: retire linker after native app discovery was confirmed.
-- `af29653`: constrain uninstall paths and preflight removals.
-- `8b3c391`: preserve audit failures and pin installs to audited commits.
-- `ee874dc`: atomic bootstrap and idempotent PATH setup.
+- `29424e8`: configurable install paths, scheduled jobs default, safety checks,
+  regression coverage and operator documentation.
+- `81dcbc4`: focus mac-login on direct dedicated-Keychain setup.
+- `447a0f2`: universal-source/tool distribution vision with security as primary goal.
 
 ## Immediate next steps
 
-No outstanding requested work. Read this handoff, inspect current Git status/diffs
-and recent history, and run README checks before further changes.
+No outstanding requested work. Inspect current Git state and the handoff before
+continuing. Use README verification commands for subsequent implementation changes.
 
 ## Things not to do / re-investigate
 
-Do not restore implicit skill installs, expose checkout content through automatic
-symlinks, rename exact-address back, or assume gh installation proves app discovery.
-Keep implementation changes focused and dependable while serving the broader
-vision. The current wrapper, tool list and audit are not limits on that vision.
+Do not silently reinstall skills during bootstrap or path registration. Removing a
+path leaves its skills in place; re-add it before uninstalling those skills.
+Keep custom paths in the same active list as defaults so default removal works.
+Do not restore the retired linker or assume CLI placement proves app discovery.

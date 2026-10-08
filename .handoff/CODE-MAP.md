@@ -1,7 +1,10 @@
 # Code map
 
 - `skillstrap.sh`: bootstrap, argument checking, clone/validation/static audit,
-  pinned seven-target install, exact-name uninstall and list.
+  pinned installation into configured directories, exact-name uninstall and list.
+  `paths` subcommands maintain `~/.config/skillstrap/install-paths`; defaults include
+  seven tool directories plus `~/.scheduled-jobs/skills`. Configuration is local
+  user data, not tracked in this repository.
 - `tests/test_skillstrap.py`: offline CLI regression suite using temporary homes,
   mock commands and real local Git fixtures. `TEST_SHELL` chooses the shell.
 - `README.md`: operator commands, audit/deletion limits and verification commands.

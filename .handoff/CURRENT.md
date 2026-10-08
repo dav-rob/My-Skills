@@ -1,34 +1,30 @@
 # Current
 
-`mac-login` is in `skills/mac-login/`, initially implemented as `b9abc7a` and
-refocused/generalized in `81dcbc4`. It leads directly to a local setup webapp and
-dedicated Apple Keychain item when a password manager requires interactive
-authentication; agents must not spend time exploring autofill or unlocking the
-manager. Personal/site-specific instructions and test fixtures were removed.
-The existing parameterized helper is unchanged: explicit service/account/HTTPS
-origin, refusal to overwrite, fresh-process checks without dialogs and native OS
-clipboard paste. Browser-based tool logins fit this workflow; native-only flows
-need separate integration. Screen-lock/reboot operation is not established by a
-credential-access check. Nine isolated helper checks and skill format validation
-pass for this revision; no real credentials or browser sessions were accessed.
+The configurable installation-path request is complete. `29424e8` is pushed on
+main and the local `~/.local/bin/skillstrap.sh` was updated with the requested
+curl bootstrap, then verified byte-for-byte against the tested source.
 
-The vision is distribution from any GitHub repository to every compatible tool,
-with safety and security as the primary design goals. The current seven targets
-and conservative static audit are implementation limits to improve, not limits
-on the project's intended scope. No runtime expansion was made by this vision correction.
+`paths [list]`, `paths add <directory>` and `paths remove <directory>` manage a
+complete active list in `~/.config/skillstrap/install-paths`. Without that file,
+defaults cover the seven existing tool directories plus `~/.scheduled-jobs/skills`.
+Install, list and uninstall use the same active list through gh's `--dir` option.
+Removing a path leaves its skills in place and excludes it from future operations.
+Bootstrap does not install skills or alter saved path configuration.
 
-Antigravity 2.0 support is complete on `main`: seven install targets, including
-`antigravity2.0`, and uninstall support for `.gemini/config/skills`.
+45 offline tests pass under sh and dash (36 distribution tests and nine isolated
+credential-helper tests). Syntax/diff checks pass. Live GitHub CLI 2.101.0 checks
+in a temporary HOME verified eight-directory installation, pinned metadata,
+listing, add/remove persistence, excluded-path preservation, and custom-path
+install/uninstall. The real installed command lists all eight defaults, including
+scheduled jobs; existing real skill installations were not changed in this task.
 
-The earlier full run passed 33 offline tests under sh and dash: 24 distribution tests
-and nine scoped credential-helper checks using fake secrets/disposable loopback
-ports. Shell syntax and staged diff checks also pass. The new skill was created
-in the requested repository; installed skill copies were not updated by this task.
+The vision remains distribution from any GitHub repository to every compatible
+tool, with safety and security as the primary goals. Keep explicit skill selection,
+compact conservative audits, pinned installs and complete destination preflight.
+Registered paths must be beneath HOME without traversal or symlinked components;
+existing skill trees containing links are refused during overwrite. Sequential
+installation can still leave earlier destinations installed if a later gh call fails.
+Static audits remain incomplete; no broader security claim is established.
 
-The user's installed command was updated from GitHub and used to install
-exact-address for all seven targets. Antigravity 2.18.1 visibly lists it as Global
-in Settings → Customizations. The legacy linker has been removed.
-
-No outstanding requested work. Preserve explicit selection, compact audits,
-pinned installs and conservative uninstall. Future app support should verify
-actual app discovery as well as CLI placement.
+No outstanding requested work. Other repository skills include exact-address,
+fine-grained-commits, handoff and the direct dedicated-Keychain mac-login workflow.
