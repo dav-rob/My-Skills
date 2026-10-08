@@ -40,7 +40,14 @@ may still be recorded by tools without an ephemeral option.
 | `cursor-agent` | 2026.10.01-e373342 | Help advertises parameterized model IDs. Model listing and headless prompt returned exit 1, stderr authentication required, empty stdout. Account catalog and successful inference remain unverified. |
 | `claude` | 2.1.294 | Stream control initialization returned model aliases, resolved IDs and per-model effort levels. Headless prompt failed authentication with exit 1 and `is_error: true`, despite `subtype: "success"`. Successful inference remains unverified. |
 | `agy` | 1.3.1 | Model listing, JSON and streaming inference, and `/usage` succeeded. Invalid effort and conflicting suffix/effort failed with exit 1 plus structured ERROR before inference. Help says timeout default is unbounded, unlike the fetched guide; skills set it explicitly. |
-| `opencode` | 1.18.35 | Model listing and loopback `/config/providers` returned model capabilities/variants. No OpenAI provider was configured. Invalid provider emitted an error event and exit 1. Default inference exceeded 55 seconds; explicit local `omlx/Qwen3.8-27B-4bit` exceeded 25 seconds, both after only a start event. Neither proves exhaustion. |
+| `opencode` | 1.18.35 | Refreshed free-model list and loopback `/config/providers` returned current IDs/capabilities/variants. `opencode/space-bunny-free` and `opencode/ling-3.1-flash-free` at `low` both returned exit 0, the expected answer, final `step_finish`/`stop`, usage and zero reported cost. No OpenAI provider was configured. Invalid provider emitted an error event and exit 1. Earlier default and local requests missed 55/25-second deadlines; those did not prove exhaustion. |
+
+The lower-priority oMLX checks used the two discovered local IDs without a
+reasoning variant. `omlx/Qwen3.6-35B-A3B-4bit` finished within a longer 90-second
+deadline, returned the expected answer and final stop/usage events.
+`omlx/Qwen3.8-27B-4bit` emitted only a start event within 90 seconds and was
+terminated/reaped by the caller. Its completion remains unverified; no auth,
+quota or backend diagnosis follows from that timeout alone.
 
 The Codex catalog offered `low`, `medium`, `high`, `xhigh`, `max`, `ultra` for
 GPT-6.1 Sol. Claude initialization offered five efforts through `max` for Opus 5.5,
@@ -86,6 +93,6 @@ nested-source selection and flat-target symlink preflight.
   [server API](https://opencode.ai/docs/server/).
 
 The installed help and observed protocol take precedence over stale examples.
-Successful inference after Cursor/Claude login, long-running OpenCode inference,
-and actual quota/context-limit envelopes remain future validation opportunities;
+Successful inference after Cursor/Claude login and actual quota/context-limit
+envelopes remain future validation opportunities;
 the skills explicitly describe these limits rather than presenting them as tested.

@@ -16,6 +16,15 @@ Run `opencode models` or `opencode models "$provider" --verbose`. Invocation
 uses `provider/model`, not a display name. A listing is configuration discovery,
 not proof that the remote service or account is currently usable.
 
+For OpenCode's bundled free models, run `opencode models opencode --refresh`
+when a current catalog is needed, then select an offered free model ID. Free
+models rotate frequently: don't hardcode yesterday's free list or assume a paid
+provider needs login before these can be used. Confirm availability with a tiny
+headless request; a queue or provider outage can still delay a listed model.
+For local oMLX models, discover the configured `omlx/` IDs with `opencode models
+omlx`. Test that local service separately; do not infer reasoning variants or
+free-cloud availability from a local model's success/failure.
+
 Effort is `--variant "$variant"`; there is no common effort vocabulary across
 providers. For an exact list, use an existing local OpenCode server's
 `GET /config/providers`, or start a temporary `opencode serve` bound explicitly
@@ -80,7 +89,13 @@ edits; respect backoff/reset and don't force token exhaustion to test detection.
 
 [Official CLI](https://opencode.ai/docs/cli/), [models](https://opencode.ai/docs/models/)
 and [server API](https://opencode.ai/docs/server/).
-Verified installed help, model listing, effective variant catalog from the local
-server, and structured invalid-provider failure. The default smoke request emitted
-`step_start` but exceeded 55 seconds, so its inference success was not established.
-A separately pinned local-model request also exceeded its 25-second deadline.
+Verified installed help, refreshed free-model listing, effective variants from
+the loopback server, and structured invalid-provider failure. Both discovered
+`opencode/space-bunny-free` and `opencode/ling-3.1-flash-free` with `--variant low`
+returned exit 0, the expected answer, final `step_finish` with `reason: "stop"`,
+token counts and zero reported cost. An earlier unpinned default request missed
+its deadline; don't diagnose that as a login or quota failure.
+Local `omlx/Qwen3.6-35B-A3B-4bit` also completed with the expected answer and
+usage. `omlx/Qwen3.8-27B-4bit` emitted a start event but missed a 90-second
+deadline; its inference completion remains unverified. Neither local catalog
+entry exposed reasoning variants.
