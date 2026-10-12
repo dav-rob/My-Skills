@@ -1,5 +1,14 @@
 # Current
 
+The latest focused update is `846855a` (2026-10-12): Codex and Antigravity now
+save resumable identity early and retain it on interruption. Antigravity also
+covers stdin NDJSON, required-tool soft denials, temporary/persistent web access,
+and a carefully qualified stale structured-output observation. Source details
+and validation limits are in `docs/CLI-SKILLS.md` and the Antigravity follow-up
+reference. This is documentation only; no installer/runtime behavior changed.
+Both updated skills were audited and reinstalled into all eight configured paths
+at that commit; all 16 copies, references and pins were verified.
+
 Five CLI skills are prepared under `skills/cli/`: cli-codex, cli-cursor,
 cli-claude, cli-antigravity and cli-opencode. They were researched through
 OMGSkills and official sources, independently written, and checked against

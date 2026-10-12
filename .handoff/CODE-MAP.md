@@ -14,6 +14,8 @@
 - `skills/cli/cli-*/SKILL.md`: five native CLI invocation/model/effort/feedback
   guides, grouped in source but installed as flat cli-* folders. Codex/Claude
   discovery protocol details are supporting references within each skill.
+  Antigravity's `references/follow-up.md` covers remote web access, its lifecycle
+  and schema-result consistency after resume.
 - `docs/CLI-SKILLS.md`: pinned research candidates, installed-binary checks and
   verification limits for the CLI collection.
 - `skills/mac-login/SKILL.md`: scoped Mac Keychain website-login workflow and
