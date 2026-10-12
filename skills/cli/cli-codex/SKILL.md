@@ -55,6 +55,21 @@ completed `agent_message` items, `thread_id` from `thread.started`, and usage fr
 `turn.completed.usage`. Individual failed tool items need assessment against the
 requested outcome; a model saying it finished doesn't prove its changes work.
 
+Persist `thread_id` immediately on `thread.started`, before waiting for completion.
+Keep the original working directory, selected model/effort, permission settings,
+active `CODEX_HOME` location (not its credentials), and whether session persistence
+was enabled. Retain this metadata after cancellation, timeout or malformed output;
+missing final metadata must not overwrite a known ID. A UUID identifies a thread
+but doesn't prove that its rollout was saved. Runs made with `--ephemeral` cannot
+be made resumable retroactively from their UUID alone.
+
+For follow-up, launch with the saved working directory/profile and exact UUID,
+using the installed resume help to choose supported flags. Reconcile partial
+actions first. When showing a copyable command in an email or report, validate the
+ID and shell-quote each argument, including the working directory; keep the
+programmatic invocation as an argument array. Do not advertise a working resume
+link/command for a run known to lack persisted history.
+
 Return a caller result containing `status`, `exit_code`, `model`, `effort`,
 `session_id`, `usage`, `answer`, and `error` (plus `retry_after`/`resets_at` when
 reported). Include `timed_out` or `incomplete` when no terminal success arrives.
@@ -77,4 +92,8 @@ Never switch accounts/models or purchase/reset credits implicitly.
 [Official non-interactive documentation](https://developers.openai.com/codex/noninteractive)
 and [app-server protocol](https://developers.openai.com/codex/app-server).
 Live verification: model discovery, read-only quota lookup, and a successful
-`gpt-6.1-sol`/`high` JSONL prompt. Quota/context exhaustion was not induced.
+`gpt-6.1-sol`/`high` JSONL prompt. On 2026-10-12, a scheduler's early identity
+persistence and retention on interruption were checked with fake CLI events;
+saved-run commands were checked against local resume help and persisted history.
+Those checks did not execute a live mutating follow-up.
+Quota/context exhaustion was not induced.

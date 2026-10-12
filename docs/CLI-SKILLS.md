@@ -64,6 +64,32 @@ overage did not prevent completion. Startup confirmed model resolution and
 `per_turn_effort_active`, but did not echo an effective effort level. The requested
 efforts were accepted; their exact effective values remain unverified.
 
+## Scheduler follow-up checks (2026-10-12)
+
+Later scheduled-jobs work tested agy 1.3.3 with public-source research as well as
+small inference probes. The Antigravity skill now includes stdin NDJSON input,
+early durable identity, required-tool denial handling, and a conditional
+`references/follow-up.md` for temporary/persistent web access and schema resume.
+The Codex skill clarifies early identity persistence and saved-run command safety.
+
+- Antigravity exact-ID resume in a fresh process remembered prior context.
+  One-message stdin streaming plus EOF completed a turn. Required web reads could
+  be soft-denied with exit 0, `SUCCESS`, empty response and `denied_actions`;
+  authorized public web reads then succeeded. Plan instructions and terminal
+  sandboxing must not be mistaken for enforced read-only access or tool approval.
+- Temporary remote access exposed the exact CLI conversation. After explicit
+  owner authorization, the official persistent service showed CLI history and
+  accepted a web follow-up after the temporary terminal session exited. The
+  editor's separate remote instance did not show that CLI history. Reboot/logout
+  recovery and locked-screen GUI operation were not tested.
+- One resumed schema conversation returned an updated `response` alongside the
+  earlier `structured_output`. This remains a single observation; the guidance
+  calls for checking current-turn consistency, not rejecting all structured output.
+- Codex early metadata persistence and retention on interruption were checked in
+  scheduler tests with fake CLI events. Resume commands were checked against local
+  help and existing saved history; no inference follow-up was run on live property
+  data. No new claim of live Codex resume execution follows from those checks.
+
 ## Caller contract
 
 Each skill tells the invoker to preserve process exit, terminal event, errors,
