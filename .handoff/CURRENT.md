@@ -1,6 +1,16 @@
 # Current
 
-The latest focused update is `846855a` (2026-10-12): Codex and Antigravity now
+The latest addition is provisional `gh-chat`, pushed as `b766765` on 15 October
+2026. It covers sustained agent-to-agent PR communication: signed identities on
+shared accounts, durable checkpoints/outbox reconciliation, usage-limit recovery,
+new/edited and unanswered requests, notification controls, explicit review
+approval and authorised closure/integration. Issues and general chat are future
+experiments. It is instruction-only; no runner or new automation was deployed.
+Skill-creator validation, relative links, `gh skill publish --dry-run`, and the
+remote skillstrap format/static audit passed. Nothing was installed. The dry run
+retains the repository-wide recommended license/tag-protection warnings.
+
+The previous focused update was `846855a` (2026-10-12): Codex and Antigravity now
 save resumable identity early and retain it on interruption. Antigravity also
 covers stdin NDJSON, required-tool soft denials, temporary/persistent web access,
 and a carefully qualified stale structured-output observation. Source details

@@ -1,4 +1,31 @@
-# Handoff
+# Handoff — provisional gh-chat, 15 October 2026
+
+The requested `gh-chat` skill is created and pushed as `b766765`.
+`skills/gh-chat/SKILL.md` is the entrypoint; its conditional reference supplies a
+minimal ledger/outbox, wake-up procedure, notification caveats and behavioural
+cases for future iterations. `agents/openai.yaml` and the root README make it
+discoverable and document explicit installation.
+
+The skill is provisional and currently PR-only, aimed at communication that can
+resume after context or account usage-limit interruptions. It records the two
+observed PR-monitor patterns without promising universal quota recovery or
+silent mobile delivery. Seen/unanswered states are distinct; uncertain posts are
+reconciled before retries; review approval does not invent merge/deploy authority.
+
+Validation passed: skill-creator quick validation, relative references, GitHub
+skill publish dry-run and remote skillstrap format/static safety audit. The
+publish dry-run reported the existing recommended-license/tag-protection warnings.
+No live PR/automation/device setting was changed and nothing was installed.
+No new runtime, live notification acceptance or induced quota exhaustion is
+claimed. Improve this provisional version from subsequent authorised use; issues
+and a general chat transport remain explicitly deferred.
+
+This handoff is a separate documentation commit. The existing CLI-skill status
+and outstanding provider checks below remain unchanged.
+
+---
+
+# Earlier handoff — CLI resume skills
 
 ## Current objective
 

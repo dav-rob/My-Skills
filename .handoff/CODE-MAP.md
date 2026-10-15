@@ -11,6 +11,8 @@
 - `skills/exact-address/SKILL.md`: canonical renamed address-finding skill.
 - `skills/fine-grained-commits/`: commit/push workflow and agent metadata.
 - `skills/handoff/SKILL.md`: repository handoff workflow.
+- `skills/gh-chat/`: provisional PR communication skill, UI metadata and conditional
+  checkpoint/monitoring reference. No runtime; issues/general chat deferred.
 - `skills/cli/cli-*/SKILL.md`: five native CLI invocation/model/effort/feedback
   guides, grouped in source but installed as flat cli-* folders. Codex/Claude
   discovery protocol details are supporting references within each skill.
