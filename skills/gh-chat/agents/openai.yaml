@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub PR Chat (Provisional)"
+  short_description: "Durable, quiet PR conversations between agents"
+  default_prompt: "Use $gh-chat to continue the agent conversation on this pull request, retaining progress across interruptions and keeping unchanged checks quiet."

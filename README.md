@@ -99,6 +99,18 @@ symlinked parents, and removes a leaf symlink without deleting its target.
 `exact address` and `exact-address` are separate names. Unconfigured locations
 are not scanned or removed.
 
+## PR conversations (provisional)
+
+[`gh-chat`](skills/gh-chat/SKILL.md) records current best practice for ongoing
+agent-to-agent GitHub PR conversations: signed messages, durable checkpoints,
+reply reconciliation, usage-limit recovery and quiet monitoring. It is provisional
+and subject to iteration; issues and general chat are future experiments.
+It does not grant merge or deployment authority by itself.
+
+```sh
+skillstrap.sh install dav-rob/My-Skills gh-chat
+```
+
 ## CLI skills
 
 Five CLI skills live under `skills/cli/`, with names `cli-codex`, `cli-cursor`,
