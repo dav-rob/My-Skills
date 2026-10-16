@@ -90,6 +90,32 @@ The Codex skill clarifies early identity persistence and saved-run command safet
   help and existing saved history; no inference follow-up was run on live property
   data. No new claim of live Codex resume execution follows from those checks.
 
+## Antigravity refresh (2026-10-16)
+
+The installed `agy` had updated itself to 1.4.0 since the 1.3.3 checks. A Scheduled Jobs
+digest then failed in ten seconds: its report schema, shared with Codex, had an `error_code`
+enum starting with `null`, which Gemini rejects, and every Antigravity run had failed since
+that schema change on 14 October. The weekly digest had not run since 12 October, so it
+went unnoticed. The skill gained `references/structured-output.md` and refreshed facts.
+
+- A `null` inside an enum returned exit 3 and a terminal `ERROR` envelope
+  (`INVALID_ARGUMENT`, code 400) within seconds. Type lists containing `"null"`,
+  `maxLength`, `additionalProperties: false` and `required` were accepted. A required
+  nullable enum made Gemini report an error code on a successful probe, and required
+  nullable strings came back as `""`; optional nullable fields behaved correctly for both a
+  success-shaped and a failure-shaped prompt.
+- A real research run through stdin streaming with `--json-schema` completed
+  (`completed_with_warnings`, exit 0, 7 min 51 s). Its envelope had `structured_output`
+  and a separate 14,177-character `response`; the structured summary shared no verbatim
+  text with it.
+- Exit statuses re-checked without inference: 1 for a contradictory model/effort pair and
+  for an unknown `--agent`, 2 for `--print` with `--prompt-interactive`.
+- Recent changelog items (`--model` base names, `--mode auto`, stall retry, quota and
+  sign-in messages) are recorded as the vendor's statements, not independent checks.
+
+Not re-checked on 1.4.0: `/usage`, exact-ID resume, denied-action handling, remote control,
+other models and other schema keywords.
+
 ## Caller contract
 
 Each skill tells the invoker to preserve process exit, terminal event, errors,

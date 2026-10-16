@@ -7,16 +7,23 @@ description: Run Google Antigravity CLI (agy) from another AI or script, discove
 
 Use `agy`, not an editor launcher or `gemini`. Inspect `command -v agy`,
 `agy --version`, `agy --help`, `agy models`, and `agy agents` as needed.
-The latest tested binary was 1.3.3 on 2026-10-12. Inference uses cached authentication;
-report an auth error to the caller instead of opening an unattended login flow.
+Most behaviour below was verified on 1.3.3 (2026-10-12). The stream-json protocol, model
+listing, exit statuses and `--json-schema` behaviour were re-checked on 1.4.0 on 2026-10-16.
+The CLI updates itself between runs, so record `agy --version` with every run and re-verify
+after a change. Inference uses cached authentication; report an auth error to the caller
+instead of opening an unattended login flow.
 
 ## Model and effort
 
 `agy models` returns model slugs and display names. Many slugs already include
 the effort, for example `gemini-3.8-flash-high`. Choose an offered combination,
 then use `--model "$model_slug"`; `--effort "$effort"` can also express the
-requested effort. Don't combine contradictory suffix/effort values. Verify the
-pair with a small non-mutating headless request when exact support is uncertain.
+requested effort. Don't combine contradictory suffix/effort values: the CLI rejects
+that itself, with exit 1 and an `ERROR` envelope before any inference (re-checked on
+1.4.0). From 1.3.4 the changelog says `--model` also accepts a base model name without
+`--effort` and picks that model's default thinking level; report that effort as unknown
+unless the result states it. Verify the pair with a small non-mutating headless request
+when exact support is uncertain.
 
 The installed parser advertises `low`, `medium`, `high`, `xhigh`, `max`, while
 the fetched catalog here offered low/medium/high variants (some families only
@@ -33,8 +40,11 @@ agy --print "$prompt" --model "$model_slug" --effort "$effort" \
 ```
 
 Run in the intended working directory. The bypass flag supports authorized YOLO
-work and approves all tools, including writes and commands. `--mode plan` adds
-planning instructions; don't treat it as an enforced read-only boundary.
+work and approves all tools, including writes and commands. `--mode` offers `plan`,
+`accept-edits` and (from 1.3.5, per the changelog) `auto`, which approves edits and safe
+commands but reviews commands that would leave the sandbox; `auto` was not tested
+headless. `--mode plan` adds planning instructions; don't treat it as an enforced
+read-only boundary.
 `--sandbox` restricts terminal execution and does not grant browser/tool approval.
 Use permissions appropriate to the authorized task; don't silently widen global
 allow rules to fix a headless denial. Successful inference alone doesn't establish
@@ -64,7 +74,9 @@ Save `conversation_id` durably as soon as it appears on an `init` event, in
 directory, selected model/effort and active CLI profile. Retain it on timeout,
 cancellation or parser failure; missing later metadata must not erase it.
 Resume that exact ID with `--conversation`, after inspecting partial work.
-Read [follow-up.md](references/follow-up.md) for web access or schema-based resume.
+Read [follow-up.md](references/follow-up.md) for web access or schema-based resume, and
+[structured-output.md](references/structured-output.md) before passing `--json-schema` or
+relying on `structured_output`: a schema Gemini rejects fails every run.
 
 ## Feedback and limits
 
@@ -79,6 +91,16 @@ were denied. Preserve the provider outcome separately and report the task as
 blocked/incomplete when a required action was denied. Assess unrelated denials
 against the requested outcome rather than failing every warning automatically.
 
+Exit statuses seen on 1.4.0: 0 success; 1 a rejection by the CLI before any request
+(invalid or contradictory model/effort, unknown `--agent`); 2 a print-mode usage error
+such as `--print` with `--prompt-interactive`; 3 a provider request error returned with
+an `ERROR` envelope (for example an invalid schema). Read the envelope, not the code alone.
+The changelog (`agy changelog`, not independently re-checked) adds that 1.3.3 reports an
+individual quota limit at once and words an expired sign-in as `Authentication expired.
+Please log back in.`, that 1.3.6 cancels and retries a model request that stalls for five
+minutes (so a run can take longer without failing), and that headless `-p` runs skip
+subagent questions.
+
 Return `status`, `exit_code`, `model`, `effort`, `session_id` (conversation ID),
 `usage`, `answer`, `error`, and retry/reset timing when reported. In a continued
 session counters may be cumulative; don't sum cumulative results or double-count
@@ -88,8 +110,9 @@ Read allowance with a separate `agy --print /usage` invocation when supported.
 It is a CLI text report, not a normal model JSON result. Don't send CLI-handled
 slash commands in `--input-format stream-json`. Treat token usage and remaining
 model quota/credits separately. Classify explicit quota/resource-exhausted,
-rate-limit, context/output limit, invalid-model/effort, authentication, and
-network errors; preserve unknown errors rather than diagnosing every failure as
+rate-limit, context/output limit, invalid-model/effort, invalid request or schema
+(`INVALID_ARGUMENT`, code 400: no retry helps until the request changes), authentication,
+and network errors; preserve unknown errors rather than diagnosing every failure as
 “out of tokens”. Honor reset/backoff and bound retries. Inspect partial edits
 before another attempt; don't induce exhaustion, spend credits or switch accounts
 to test recovery.
@@ -104,4 +127,8 @@ a contradictory model/effort pair failing before inference were also verified.
 On 1.3.3, stdin streaming, exact-ID resume in a fresh process, denied web actions,
 authorized public web reads, and temporary/persistent web follow-up were verified.
 See the follow-up reference for the limited structured-output observation.
+On 1.4.0 (2026-10-16), model listing, stdin streaming with `--json-schema` through a real
+eight-minute research run, the exit statuses above and the schema behaviour in the
+structured-output reference were verified. `/usage`, exact-ID resume, denied-action
+handling and remote control were not re-checked on 1.4.0.
 Actual exhaustion and locked-screen GUI operation weren't verified.

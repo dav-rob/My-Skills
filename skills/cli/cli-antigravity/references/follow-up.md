@@ -55,7 +55,8 @@ read-only inspection suffices; a web follow-up executes on the host and may act.
 
 ## Structured output after resume
 
-In one resumed schema-based conversation, terminal `response` contained the new
+Schema acceptance, nullable fields and the normal result envelope are in
+[structured-output.md](structured-output.md). In one resumed schema-based conversation, terminal `response` contained the new
 corrected answer while `structured_output` still contained the earlier report.
 This is one observation, not a reproduced general rule. Preserve both fields and
 verify that structured data reflects the current turn before using it downstream.
