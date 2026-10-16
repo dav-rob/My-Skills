@@ -1,6 +1,14 @@
 # Current
 
-The latest addition is provisional `gh-chat`, pushed as `b766765` on 15 October
+The latest update is `afcc154` (16 October 2026): `cli-antigravity` gained
+`references/structured-output.md` and refreshed facts for agy 1.4.0. A schema with a
+`null` in an enum is rejected by Gemini (exit 3) and had failed every Scheduled Jobs
+Antigravity run since 14 October; the reference also covers optional nullable fields,
+`structured_output` versus `response`, and a probe recipe. Validated with skill-creator,
+relative links, `gh skill publish --dry-run` and the 49 tests. The installed copies
+under the configured skill paths were not updated; reinstall to pick it up.
+
+The previous addition is provisional `gh-chat`, pushed as `b766765` on 15 October
 2026. It covers sustained agent-to-agent PR communication: signed identities on
 shared accounts, durable checkpoints/outbox reconciliation, usage-limit recovery,
 new/edited and unanswered requests, notification controls, explicit review

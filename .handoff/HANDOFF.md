@@ -1,4 +1,24 @@
-# Handoff — provisional gh-chat, 15 October 2026
+# Handoff — Antigravity skill refresh, 16 October 2026
+
+`afcc154` adds `skills/cli/cli-antigravity/references/structured-output.md` and updates
+`SKILL.md`, `references/follow-up.md` and `docs/CLI-SKILLS.md`. Trigger: a Scheduled Jobs
+weekly digest failed in ten seconds because its shared report schema had `null` in an
+`error_code` enum; Gemini returns exit 3 with `INVALID_ARGUMENT` for that, and every
+Antigravity run had failed since 14 October without anyone noticing.
+
+Facts re-checked on agy 1.4.0 (the CLI had auto-updated from 1.3.3): the rejection
+shape, accepted schema constructs, Gemini filling required nullable fields with junk,
+the result envelope (`structured_output` is independent of `response`), a real eight
+minute research run with a schema, and exit statuses 1, 2 and 3. Changelog-only items
+are labelled as such. Not re-checked: `/usage`, exact-ID resume, denied-action handling,
+remote control, other models and other schema keywords.
+
+Nothing was reinstalled: the copies under `~/.agents/skills` and the other configured
+paths are still the previous commit. Reinstall with
+`skillstrap.sh install dav-rob/My-Skills cli-antigravity`, then check the pins.
+This handoff is a separate documentation commit.
+
+## Earlier handoff — provisional gh-chat, 15 October 2026
 
 The requested `gh-chat` skill is created and pushed as `b766765`.
 `skills/gh-chat/SKILL.md` is the entrypoint; its conditional reference supplies a
