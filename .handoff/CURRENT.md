@@ -5,8 +5,9 @@ The latest update is `afcc154` (16 October 2026): `cli-antigravity` gained
 `null` in an enum is rejected by Gemini (exit 3) and had failed every Scheduled Jobs
 Antigravity run since 14 October; the reference also covers optional nullable fields,
 `structured_output` versus `response`, and a probe recipe. Validated with skill-creator,
-relative links, `gh skill publish --dry-run` and the 49 tests. The installed copies
-under the configured skill paths were not updated; reinstall to pick it up.
+relative links, `gh skill publish --dry-run` and the 49 tests. It was then reinstalled
+into all eight configured paths (pinned to `d146697`, whose skill tree equals `afcc154`);
+all 24 files were verified against `afcc154`, and no other installed skill changed.
 
 The previous addition is provisional `gh-chat`, pushed as `b766765` on 15 October
 2026. It covers sustained agent-to-agent PR communication: signed identities on

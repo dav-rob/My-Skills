@@ -13,10 +13,13 @@ minute research run with a schema, and exit statuses 1, 2 and 3. Changelog-only 
 are labelled as such. Not re-checked: `/usage`, exact-ID resume, denied-action handling,
 remote control, other models and other schema keywords.
 
-Nothing was reinstalled: the copies under `~/.agents/skills` and the other configured
-paths are still the previous commit. Reinstall with
-`skillstrap.sh install dav-rob/My-Skills cli-antigravity`, then check the pins.
-This handoff is a separate documentation commit.
+Reinstalled with `skillstrap.sh install dav-rob/My-Skills cli-antigravity` into all eight
+configured paths. It pinned to `d146697` (the handoff commit after `afcc154`), whose
+`skills/cli/cli-antigravity` tree hash `bd060d9` is identical, and every copy's
+`github-tree-sha` pin matches it. A read-only comparison found all three files in all
+eight copies equal to `afcc154`; `gh skill` only reorders the frontmatter, adds its pin
+block and drops the blank line after it, so compare bodies, not whole files. No other
+installed skill file changed. This handoff is a separate documentation commit.
 
 ## Earlier handoff — provisional gh-chat, 15 October 2026
 
