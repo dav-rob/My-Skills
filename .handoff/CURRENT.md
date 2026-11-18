@@ -23,11 +23,12 @@ coding evaluations, exclude DeepSWE, preserve choices without meaningful new
 evidence, maintain only the model table and five CLI skills, and audit/reinstall
 only changed skills after validation and publication.
 
-Installation is pending: skillstrap stopped before audit/writes because gh's
-saved github.com token is invalid. The user was asked to run
-`gh auth login -h github.com`. Git pushes still work. Do not bypass the normal
-audited installation; after login, explicitly install model-use into all active
-configured paths and verify its body, references and pin.
+Installation is complete after the user renewed GitHub CLI authentication.
+Skillstrap format/static audits passed and model-use was installed flat into all
+eight configured paths at `c5f2990`, whose skill tree equals `5475424`. All 32 files
+were verified against source (normalizing only the SKILL.md YAML/body boundary),
+including exact commit/tree metadata, flat listing identity and intact references.
+Installed skillstrap list succeeds. The weekly automation remains active.
 
 The prior CLI and installer state is documented in `docs/CLI-SKILLS.md`, Git and
 the durable handoff files. The latest Antigravity skill was reinstalled at

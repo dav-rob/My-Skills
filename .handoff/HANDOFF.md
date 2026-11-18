@@ -24,12 +24,16 @@ binary upgrades are authorized. The first scheduled execution has not run.
 
 ## Current state
 
-Skill creation and scheduling are complete. Installation is blocked by invalid
-GitHub CLI authentication, not an audit finding. The attempted
-`skillstrap.sh install dav-rob/My-Skills model-use` stopped before any audit or
-destination write. The user has an asynchronous request to run
-`gh auth login -h github.com`. Git push still succeeds. Do not assume login until
-the user confirms and authentication is checked.
+Creation, scheduling and installation are complete. The user renewed GitHub CLI
+authentication and gh auth status returned exit 0. The explicit
+`skillstrap.sh install dav-rob/My-Skills model-use` passed format/static audits
+and installed flat copies in all eight configured paths at
+`c5f2990b5610840518796cfc26cc14946279f712`. Its skill tree is identical to `5475424`.
+All 32 files were verified: normalized SKILL.md bodies, byte-identical references
+and UI metadata, exact source/commit/tree metadata, non-symlink flat directories,
+and gh listing name/path/pinned/version. Installed skillstrap list succeeds.
+The existing weekly automation was rechecked as active with the expected model,
+effort and schedule. Its first scheduled execution remains unverified.
 
 ## Verification
 
@@ -54,17 +58,18 @@ the user confirms and authentication is checked.
 
 ## Problems / blockers
 
-gh auth status reports the github.com token in its hosts.yml is invalid; no
-auth environment override is present. No credential values were read or logged.
-Cursor login remains an earlier unconfirmed item, outside this rotation.
+No blocker remains for model-use. The initial invalid GitHub CLI token was
+resolved by the user; no credential values were read or logged. Cursor login
+remains an earlier unconfirmed item, outside this rotation.
 
 ## Files currently being worked on
 
-Only the handoff documents are the follow-up to `5475424`. Installation and its
-verification remain after GitHub CLI login. Preserve any later unrelated work.
+No implementation files remain in progress. These handoff changes record the
+completed installation separately; preserve any later unrelated work.
 
 ## Relevant recent commits
 
+- `c5f2990`: initial delivery handoff and source pin used for installation.
 - `5475424`: model-use skill, maintained choices/procedure and README.
 - `afcc154`: agy structured output and version 1.4.0 guidance.
 - `846855a`: durable CLI session identity and Antigravity web follow-up.
@@ -72,10 +77,10 @@ verification remain after GitHub CLI login. Preserve any later unrelated work.
 
 ## Immediate next steps
 
-After confirmed gh authentication, run the explicit model-use skillstrap install,
-verify all active configured destinations against its published source body,
-metadata pin and three supporting files, then update this handoff in a separate
-commit. No need to rerun inference or unchanged runtime tests.
+Use model-use explicitly or through compatible skill discovery for subsequent
+app work. Weekly maintenance will review the dated table and relevant CLI changes.
+No further installation, repeated inference or unchanged runtime tests are needed
+for this delivery; assess the first scheduled result when it runs.
 
 ## Things not to re-investigate
 
