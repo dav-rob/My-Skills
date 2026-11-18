@@ -136,6 +136,35 @@ choices when evidence is inconclusive. It validates and publishes demonstrated
 changes before auditing/reinstalling only changed skills. The schedule is local
 Codex automation configuration, separate from this portable skill.
 
+### Local dashboard
+
+Open [Model use](http://127.0.0.1:48173/) on this Mac for the behavior summary,
+current model/effort recommendations, assessment date and evidence. The read-only
+page renders directly from the skill files on each request; the weekly review
+checks it without generating a second copy of the recommendations. Serving it
+uses no model tokens, external assets or third-party Python packages.
+
+```sh
+python3 dashboard/server.py                    # foreground, localhost only
+python3 dashboard/install_service.py           # persistent macOS user service
+```
+
+The user service starts at login and restarts if its process exits. It is named
+`com.dav-rob.model-use-dashboard`; its configuration is under
+`~/Library/LaunchAgents/` and logs are under `~/Library/Logs/model-use-dashboard/`.
+The weekly Codex job remains separate from this small web server. The site is
+available while this Mac is awake and the user service is running.
+
+```sh
+launchctl print "gui/$(id -u)/com.dav-rob.model-use-dashboard"  # status
+launchctl bootout "gui/$(id -u)/com.dav-rob.model-use-dashboard" # stop
+```
+
+To restart after stopping, rerun the installer. To remove login startup as well,
+delete its named plist after stopping. If you move the checkout, rerun the
+installer from its new location. `--port <number>` selects another port for the
+server or installer; update the weekly health-check URL if changing it.
+
 ## CLI skills
 
 Five CLI skills live under `skills/cli/`, with names `cli-codex`, `cli-cursor`,

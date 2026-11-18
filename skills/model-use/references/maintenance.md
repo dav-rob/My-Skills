@@ -14,6 +14,14 @@ three support the rotation. Cursor and OpenCode need checks only for relevant
 changes; they are not extra rotation slots. Add other skills only when requested.
 Preserve the round-robin policy unless the user changes it.
 
+The user also maintains a read-only local dashboard at
+`http://127.0.0.1:48173/`. It renders this skill and `references/models.md` directly
+on each request, so a changed recommendation needs no separate content copy or
+build. Hosting code lives in the repository's `dashboard/`, outside installed
+skills. Preserve this local-only service; do not add remote hosting or expose
+project state, account data or credentials. Keep its short behavior summary
+consistent with the policy when a user-authorized policy change occurs.
+
 ## One pass
 
 1. Read the current table, recent Git changes and recorded verification limits.
@@ -57,6 +65,12 @@ Preserve the round-robin policy unless the user changes it.
    installed skills into configured paths. Verify source bodies, references and
    pins. A blocked audit means no installation; report partial installation if
    a later destination fails. Do not copy around a failed audit.
+8. Check the local dashboard's `/healthz` and home page after the pass, including
+   when recommendations did not change. Verify the displayed assessment date and
+   model/effort table against the canonical reference. If the existing service
+   needs repair, follow the repository README's dashboard commands and inspect
+   its own logs; do not stop unrelated processes or start duplicate listeners.
+   Report a failed check explicitly. Reading the page does not run a model.
 
 Report material recommendation changes, verification failures and required user
 actions clearly. Include CLI versions, tests and commit/install outcomes when
