@@ -1,5 +1,24 @@
 # Current
 
+The latest change is `3407c94` (2026-11-18): explicit repeating round-robin task
+sequences and visible Published scores / Selection reasons under Current
+recommendations. `docs/model-scores/2026-11-18.json` retains selected public AA
+coding-agent chart data, source hash/date, exact fractions and CLI versions.
+Daily high configurations lack matched rows in that retrieved board; published
+max/xhigh runs are labelled as context and Sonnet default fallback is disclosed.
+Policy and model choices are unchanged. The weekly procedure/prompt maintains
+scores, provenance and reasons alongside budget/experience tradeoffs.
+
+Hydrogen/high through agy implemented the renderer/test changes after Sonnet's
+earlier dashboard task; the next Codex-manager slot is Sonnet. Full regression
+checks passed before removing one wording-only assertion; final 42 dashboard
+checks passed with warnings as errors. All 30 displayed values matched the
+primary-source snapshot; live HTTP and browser accessibility checks passed.
+The updated model-use skill passed audit and was reinstalled into all eight
+paths at `1104439`, whose skill tree equals `3407c94`. All 32 files, flat names
+and exact commit/tree pins were verified.
+
+
 The latest addition is the local model-use dashboard (`32e3c5c`, 2026-11-18),
 served at `http://127.0.0.1:48173/`. It renders the canonical skill/model notes
 on each request using Python standard library only, without model calls or

@@ -113,3 +113,13 @@ Consequences: Python standard library, no request-time model calls or build,
 loopback port 48173, and a per-user macOS service independent of the weekly AI
 review. Only explicit page/health routes; no repository/state directory serving.
 Weekly review checks health and source consistency even when choices do not change.
+
+Decision: Show quantitative evidence separately from selection policy.
+Reason: The user wants to compare personal experience and budget choices with
+metrics, and found two-step arrows ambiguous about round robin.
+Alternatives considered: A hidden recommendation rationale, a single highest-score
+ranking, or assigning a published max score to our daily high setting.
+Consequences: Explicit repeating task sequences; visible published scores,
+efficiency and reasons inside Current recommendations; dated primary-source
+snapshots; unknown matched settings remain unknown. Existing choices are not
+silently replaced by the newest model or best headline score.
