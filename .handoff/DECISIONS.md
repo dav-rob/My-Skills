@@ -105,3 +105,11 @@ weighted leaderboard from overlapping measurements.
 Consequences: Stable capability categories, primary-source evidence and modest
 changed-route tests; preserve recommendations when evidence is inconclusive.
 Weekly maintenance is scoped to the model table and existing CLI skills.
+
+Decision: Serve the model summary from canonical skill files on localhost.
+Reason: The user wants a very lightweight website kept current by weekly work.
+Alternatives considered: Separate generated content or hosted framework app.
+Consequences: Python standard library, no request-time model calls or build,
+loopback port 48173, and a per-user macOS service independent of the weekly AI
+review. Only explicit page/health routes; no repository/state directory serving.
+Weekly review checks health and source consistency even when choices do not change.

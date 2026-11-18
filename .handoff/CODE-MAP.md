@@ -15,6 +15,11 @@
   `references/models.md` contains dated choices/evidence and
   `references/maintenance.md` is the weekly model/CLI refresh procedure. The
   schedule is local Codex automation state, not a repository runtime.
+- `dashboard/server.py` and `dashboard/index.html`: read-only loopback dashboard,
+  rendered from model-use markdown per request. `dashboard/install_service.py`
+  installs its macOS user service; operation commands are in the README.
+- `tests/test_model_dashboard.py`: isolated live-update, rendering/escaping,
+  source-error and HTTP-boundary checks plus a real-source CLI lifecycle check.
 - `skills/gh-chat/`: provisional PR communication skill, UI metadata and conditional
   checkpoint/monitoring reference. No runtime; issues/general chat deferred.
 - `skills/cli/cli-*/SKILL.md`: five native CLI invocation/model/effort/feedback

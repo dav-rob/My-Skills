@@ -1,92 +1,96 @@
-# Handoff — model use, 18 November 2026
+# Handoff — local model dashboard, 18 November 2026
 
 ## Current objective
 
-Implement the user's simple round-robin delegation policy and a weekly model/CLI
-skill refresh, then install the new skill across configured paths.
+Host a very lightweight local website summarizing model-use behavior and current
+recommendations, maintained by the existing weekly background process.
 
 ## What was done
 
-Pushed `5475424`: `skills/model-use/SKILL.md`, UI metadata, dated
-`references/models.md`, conditional `references/maintenance.md`, and README usage.
-The manager delegates to the other two families. Sonnet has Claude then agy
-routes in one slot; Hydrogen gets routine turns. Preserve session identity and
-partial work, prefer at most one bounded resume, make one fallback pass, then
-use the manager's own available allowance. No new dispatcher or runtime framework.
+Pushed `32e3c5c`: Python standard-library server and a buildless HTML/CSS template
+under `dashboard/`, a macOS user-service installer, 37 dashboard tests, README
+operation commands and the model-use maintenance reference's dashboard checks.
+The server reads canonical `skills/model-use/SKILL.md` and
+`skills/model-use/references/models.md` on each request. No duplicated model IDs,
+request-time model calls, external assets, write endpoints or directory serving.
+Only home/index and health routes are served; unknown hosts are rejected and
+markdown content is escaped, with only http/https links permitted.
 
-Created active local project automation `weekly-model-and-cli-skill-maintenance`
-through the Codex automation tool. Stored configuration was checked: My-Skills
-project `9e9b9cd8-a65a-40c0-a644-42363e4c551c`, Monday 09:00,
-`gpt-6.1-sol`, `xhigh`, local execution. Its prompt reads the maintenance reference,
-preserves unrelated work and the routing policy, validates/pushes changes, then
-audits/reinstalls only changed installed skills. No arbitrary other skills or
-binary upgrades are authorized. The first scheduled execution has not run.
+Used model-use for this task: Sonnet 5.5/high through Claude built the server,
+template and initial tests; the manager reviewed/integrated it, corrected the
+assessment-age inference, decoupled test fixtures from weekly recommendation
+changes and wired hosting/maintenance. Local rotation/session state is in
+`.model-use/state.json`, excluded through this checkout's Git info/exclude.
+The next Codex-manager worker slot is Hydrogen. The worker completed successfully.
 
 ## Current state
 
-Creation, scheduling and installation are complete. The user renewed GitHub CLI
-authentication and gh auth status returned exit 0. The explicit
-`skillstrap.sh install dav-rob/My-Skills model-use` passed format/static audits
-and installed flat copies in all eight configured paths at
-`c5f2990b5610840518796cfc26cc14946279f712`. Its skill tree is identical to `5475424`.
-All 32 files were verified: normalized SKILL.md bodies, byte-identical references
-and UI metadata, exact source/commit/tree metadata, non-symlink flat directories,
-and gh listing name/path/pinned/version. Installed skillstrap list succeeds.
-The existing weekly automation was rechecked as active with the expected model,
-effort and schedule. Its first scheduled execution remains unverified.
+The site is running at `http://127.0.0.1:48173/`, on loopback only. Service label:
+`com.dav-rob.model-use-dashboard`. Its plist is in the user's Library/LaunchAgents;
+logs are in Library/Logs/model-use-dashboard. Run
+`python3 dashboard/install_service.py` after moving the checkout or changing
+server code. Model-note/template edits appear on refresh without restart.
+README has status/stop commands. The service is intended to run while this Mac
+is awake and the user is logged in; a real logout/reboot was not performed.
+
+Updated the existing automation `weekly-model-and-cli-skill-maintenance` through
+the native tool. It retains its project, Monday 09:00 schedule, local execution,
+`gpt-6.1-sol` and `xhigh`. Its prompt and maintained procedure now check `/healthz`
+and the home page even after no-change reviews, verify source/date/model
+consistency and repair only this service when needed. No duplicate automation.
+A completed scheduled run has not yet been observed.
 
 ## Verification
 
-- Read-only model discovery: Codex 0.168.0 app-server, Claude 2.1.323 stream
-  initialization, agy 1.5.11 model list. Sol 6.1/high/xhigh, Sonnet 5.5/high and
-  Hydrogen/high are exposed. Newer models are candidates, not automatic upgrades.
-- Four live bounded smoke calls: Sol/high via Codex, Sonnet/high via Claude,
-  Sonnet/high via agy and Hydrogen/high via agy. All exit 0, expected answer,
-  successful terminal result and usage; no required-action denial in agy results.
-  Temporary workspaces only; effective effort remains unknown when not echoed.
-- Independent instruction-based checks: seven scenarios covering ordinary
-  rotation, Sonnet alternate route, manager family through a different CLI,
-  exhausted workers, partial edits/timeouts, missing completion event and no-op
-  weekly review. Recovery and pointer ambiguities were fixed and rechecked.
-- Skill-creator validator, relative links, `gh skill publish . --dry-run`,
-  existing local static scanner and diff checks passed. The dry-run has the
-  existing recommended-license warnings. PyYAML was installed only in a temporary
-  dependency directory for the validator; no project dependency was added.
-- No installer/runtime changes: the old 49-test result is historical; it was not
-  rerun for this instruction-only addition. No app competence benchmark, real
-  provider-limit exhaustion or completed weekly automation run is claimed.
+- 86 tests passed (49 existing plus 37 dashboard). After making test examples
+  independent of current recommendations, all 37 passed with warnings as errors.
+- Coverage includes live markdown edits without restart, escaped hostile input,
+  safe links, source failure/recovery, generic errors, blocked arbitrary paths,
+  Host validation, read-only methods, security headers and CLI process cleanup.
+- Skill-creator validation, relative/reference checks as applicable, format
+  publish dry-run and diff checks passed. Existing recommended-license and tag
+  protection warnings remain.
+- Home and health return 200. Live recommendations/assessment date match source.
+  Browser UI was inspected through the Sites local workflow; its tab was marked
+  as a deliverable. No separate device-sized viewport test was performed.
+- The loaded service recovered after SIGTERM via its own launchctl target.
+  lsof confirmed only 127.0.0.1:48173. Reinstallation of the existing service passed
+  after adding bounded retries for launchd's transient post-bootout error 5.
+
+## Installation
+
+The model-use maintenance reference passed the remote format/static audit and
+was reinstalled in all eight paths at `32e3c5c56e8b685add7d10e30ff948d7dcae5bff`.
+All 32 files, normalized bodies, reference/UI bytes, flat names/paths and exact
+commit/tree metadata were verified. Only model-use was selected for installation;
+the web service reads the checkout directly.
 
 ## Problems / blockers
 
-No blocker remains for model-use. The initial invalid GitHub CLI token was
-resolved by the user; no credential values were read or logged. Cursor login
-remains an earlier unconfirmed item, outside this rotation.
+None known for the running page. The first service reinstall exposed a launchd
+release/bootstrap race, which was fixed and rechecked. Assessment age deliberately
+does not claim a missed review: a healthy no-change weekly review leaves its date
+unchanged. Do not invent live subscription allowances.
 
 ## Files currently being worked on
 
-No implementation files remain in progress. These handoff changes record the
-completed installation separately; preserve any later unrelated work.
+None. The service and installed maintenance reference are verified; only this
+separate handoff commit remains to be pushed.
 
 ## Relevant recent commits
 
-- `c5f2990`: initial delivery handoff and source pin used for installation.
-- `5475424`: model-use skill, maintained choices/procedure and README.
-- `afcc154`: agy structured output and version 1.4.0 guidance.
-- `846855a`: durable CLI session identity and Antigravity web follow-up.
-- `5cad8bf`: authenticated Claude verification and allowance feedback.
+- `32e3c5c`: local dashboard, tests, service installer and maintenance procedure.
+- `3f48f67`: original model-use installation verification.
+- `5475424`: round-robin policy and starting recommendations.
 
 ## Immediate next steps
 
-Use model-use explicitly or through compatible skill discovery for subsequent
-app work. Weekly maintenance will review the dated table and relevant CLI changes.
-No further installation, repeated inference or unchanged runtime tests are needed
-for this delivery; assess the first scheduled result when it runs.
+Delivery is complete; this handoff is the separate follow-up. Subsequent weekly
+reviews read the maintained procedure. No new model research or changes to the
+round-robin choices were required here. Keep the site local and read-only.
 
-## Things not to re-investigate
+## Things not to do / re-investigate
 
-Do not count two Sonnet routes as two family turns, identify a manager by its CLI,
-or launch the manager's family as a pretend worker fallback. Do not infer quota
-from timeouts, consumed tokens or API prices; alternate routes have independent
-availability only when observed. Exclude DeepSWE. Keep benchmark categories
-stable while discovering current individual evaluations through Artificial
-Analysis; no invented composite ranking or weekly benchmark framework.
+Do not use a generic directory server for this repository, infer live allowance
+or missed reviews from the assessment date, or duplicate recommendations in page
+code. Leave the service running; temporary test servers are separately reaped.

@@ -1,6 +1,15 @@
 # Current
 
-The current addition is `model-use`, pushed as `5475424` on 2026-11-18. The
+The latest addition is the local model-use dashboard (`32e3c5c`, 2026-11-18),
+served at `http://127.0.0.1:48173/`. It renders the canonical skill/model notes
+on each request using Python standard library only, without model calls or
+external assets. Its per-user macOS service starts at login and restarts after
+exit; restart recovery and loopback-only listening were verified. The existing
+weekly automation now checks the page and `/healthz`, including no-change runs.
+Full tests passed (86); the revised 37 dashboard tests also passed with warnings
+as errors. Browser layout and live source consistency were checked.
+
+The underlying coordination skill is `model-use`, pushed as `5475424` on 2026-11-18. The
 interactive model remains project manager and alternates substantial coding
 tasks between the other two families: Codex uses Sonnet/Hydrogen; Claude uses
 Sol/Hydrogen; Gemini uses Sol/Sonnet. Sonnet's Claude/agy routes share one slot.
@@ -14,7 +23,8 @@ Codex 0.168.0, Claude 2.1.323 and agy 1.5.11. Independent behavioral checks cove
 rotation, route fallbacks, manager identity, limits, interruption, missing
 terminal events and unchanged maintenance. Validation, relative references,
 format dry-run, static scan and diff checks passed. No app benchmark or deliberate
-quota exhaustion is claimed; no installer/runtime code changed.
+quota exhaustion is claimed. That original skill was instruction-only; the
+dashboard is a separate repository runtime, not an installed worker dispatcher.
 
 The active local Codex automation `weekly-model-and-cli-skill-maintenance` targets
 this project on Mondays at 09:00, using `gpt-6.1-sol` / `xhigh`. Its procedure is
@@ -29,6 +39,9 @@ eight configured paths at `c5f2990`, whose skill tree equals `5475424`. All 32 f
 were verified against source (normalizing only the SKILL.md YAML/body boundary),
 including exact commit/tree metadata, flat listing identity and intact references.
 Installed skillstrap list succeeds. The weekly automation remains active.
+The dashboard maintenance reference was audited/reinstalled into those same paths
+at `32e3c5c`; all 32 files, source bodies, supporting files, flat identities and
+commit/tree pins were verified. The original policy/model choices are unchanged.
 
 The prior CLI and installer state is documented in `docs/CLI-SKILLS.md`, Git and
 the durable handoff files. The latest Antigravity skill was reinstalled at
