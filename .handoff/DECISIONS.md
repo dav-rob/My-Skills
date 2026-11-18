@@ -87,3 +87,21 @@ Alternatives considered: Stripping source metadata; accepting arbitrary name pat
 Consequences: Flat-name uninstall works with a lowercase slug scope, retaining
 exact leaf/parent preflight. Source metadata and pins are preserved; native list
 may still show scope/name. Traversal and multi-component identities aren't stripped.
+
+Decision: Keep model coordination as one instruction-only round-robin skill.
+Reason: The user wants simple predictable use of Sol, Sonnet and Hydrogen across
+existing subscriptions, with whichever interactive model serving as manager.
+Alternatives considered: Per-task score optimization, fixed strongest-model use,
+or treating Hydrogen only as a failover.
+Consequences: Exclude the manager's family from normal workers; Sonnet's two CLI
+routes share one slot. Bounded recovery/fallback ends with the manager working
+directly. Dated model/effort choices and weekly maintenance are references;
+local session/rotation state is not committed. No new dispatcher/runtime engine.
+
+Decision: Use current Artificial Analysis coding evaluations as the discovery hub.
+Reason: Individual benchmark relevance changes quickly; the user excludes DeepSWE.
+Alternatives considered: Permanently fixing a benchmark list or inventing a
+weighted leaderboard from overlapping measurements.
+Consequences: Stable capability categories, primary-source evidence and modest
+changed-route tests; preserve recommendations when evidence is inconclusive.
+Weekly maintenance is scoped to the model table and existing CLI skills.
