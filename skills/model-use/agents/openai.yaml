@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Use"
+  short_description: "Round-robin coding workers with quota-aware failover"
+  default_prompt: "Use $model-use to coordinate this app task with alternating workhorse models, verify their results, and recover from unavailable workers."

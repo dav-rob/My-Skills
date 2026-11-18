@@ -111,6 +111,31 @@ It does not grant merge or deployment authority by itself.
 skillstrap.sh install dav-rob/My-Skills gh-chat
 ```
 
+## Model use
+
+[`model-use`](skills/model-use/SKILL.md) keeps the interactive model as project
+manager and alternates substantial coding tasks between the other two families:
+Codex uses Sonnet/Hydrogen, Claude uses Sol/Hydrogen, and Gemini uses Sol/Sonnet.
+Sonnet's Claude and Antigravity routes share one rotation slot. Unavailable routes
+fall through once; if all eligible workers are blocked, the manager works directly
+when its own allowance permits. Small edits can stay with the manager.
+
+```sh
+skillstrap.sh install dav-rob/My-Skills model-use
+```
+
+The [dated model table](skills/model-use/references/models.md) supplies exact
+model/effort choices. Project-local rotation and resumable task state are kept out
+of commits; installing the skill does not start workers or change a project's
+instructions. Use it explicitly, or allow a compatible agent to discover it.
+
+The [weekly maintenance procedure](skills/model-use/references/maintenance.md)
+refreshes model evidence and relevant CLI guides. It starts from Artificial
+Analysis's current coding evaluations, excludes DeepSWE, and preserves existing
+choices when evidence is inconclusive. It validates and publishes demonstrated
+changes before auditing/reinstalling only changed skills. The schedule is local
+Codex automation configuration, separate from this portable skill.
+
 ## CLI skills
 
 Five CLI skills live under `skills/cli/`, with names `cli-codex`, `cli-cursor`,
