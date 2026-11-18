@@ -51,6 +51,30 @@ Assessed: 2026-11-18. These are test examples, not live recommendations. Recheck
 | Hydrogen worker | `agy`: `gemini-4-hydrogen-high` | `high` | Other worker |
 | Weekly assessor | `codex`: `gpt-6.1-sol` | `xhigh` | Preserve table |
 
+## Published scores
+Example fixture benchmarks only, unrelated to live choices.
+
+### Synthetic coding suite
+| Example model | Score |
+| --- | --- |
+| Fixture-Alpha | 71.2% |
+| Fixture-Beta | 68.4% |
+
+### Synthetic cost table
+- Cost figures below are placeholder examples.
+
+| Example model | Cost per task |
+| --- | --- |
+| Fixture-Alpha | $0.14 |
+| Fixture-Beta | $0.09 |
+
+## Selection reasons
+Reasons below are synthetic test fixtures.
+
+### Slot rationale
+- Fixture-Alpha handles broad implementation fixtures.
+- Fixture-Beta covers alternate fixture verification.
+
 ## Local evidence
 Smoke response: MODEL_USE_OK. App competence is separate.
 
@@ -177,6 +201,48 @@ class HealthyRenderingTests(DashboardCase):
         _, body = self.request()
         self.assertIn("Braces {x} and %%ROTATION_TABLE%% and Recheck discovery", body)
 
+    def test_published_scores_and_selection_reasons_in_recommendations_order(self):
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        recs_start = body.index('id="h-recs"')
+        allowance_start = body.index('id="h-allowance"')
+        recs_html = body[recs_start:allowance_start]
+        self.assertNotIn("<details", recs_html)
+        markers = [
+            "gpt-6.1-sol",
+            "<h3>Published scores</h3>",
+            "Example fixture benchmarks only",
+            "<h4>Synthetic coding suite</h4>",
+            'aria-label="Synthetic coding suite"',
+            "71.2%",
+            "<h4>Synthetic cost table</h4>",
+            "Cost figures below are placeholder examples.",
+            'aria-label="Synthetic cost table"',
+            "$0.14",
+            "<h3>Selection reasons</h3>",
+            "Reasons below are synthetic test fixtures.",
+            "<h4>Slot rationale</h4>",
+            "Fixture-Alpha handles broad implementation fixtures.",
+        ]
+        positions = [recs_html.index(m) for m in markers]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_behaviour_subtitle_explains_rotation_resumption_and_fallback(self):
+        _, body = self.request()
+        beh_start = body.index('id="h-behaviour"')
+        recs_start = body.index('id="h-recs"')
+        beh_html = body[beh_start:recs_start]
+        sub_start = beh_html.index('<p class="sub">')
+        sub_end = beh_html.index("</p>", sub_start)
+        subtitle = beh_html[sub_start:sub_end].lower()
+        self.assertIn("new tasks", subtitle)
+        self.assertIn("alternate", subtitle)
+        self.assertIn("repeat", subtitle)
+        self.assertIn("resumptions", subtitle)
+        self.assertIn("fallback", subtitle)
+        self.assertNotIn("failover", subtitle)
+        self.assertNotIn("fail over", subtitle)
+
 
 class LiveUpdateTests(DashboardCase):
     def test_model_edit_appears_without_restart(self):
@@ -194,6 +260,24 @@ class LiveUpdateTests(DashboardCase):
         self.assertIn("2027-02-03", body)
         self.assertIn("3 February 2027", body)
         self.assertIn("Sol → Zebra", body)
+
+    def test_published_scores_and_reasons_edit_appears_without_restart(self):
+        self.edit(
+            MODELS_REL,
+            lambda t: t.replace("71.2%", "79.5%")
+            .replace("Synthetic coding suite", "Updated coding suite")
+            .replace(
+                "Fixture-Alpha handles broad implementation fixtures.",
+                "Updated fixture rationale bullet.",
+            ),
+        )
+        _, body = self.request()
+        recs_html = body[body.index('id="h-recs"') : body.index('id="h-allowance"')]
+        self.assertIn("Updated coding suite", recs_html)
+        self.assertIn("79.5%", recs_html)
+        self.assertIn("Updated fixture rationale bullet.", recs_html)
+        self.assertNotIn("71.2%", recs_html)
+        self.assertNotIn("Synthetic coding suite", recs_html)
 
 
 class UnsafeMarkdownTests(DashboardCase):
@@ -249,6 +333,36 @@ class UnsafeMarkdownTests(DashboardCase):
     def test_inline_pipes_in_code_do_not_split_cells(self):
         row = dash.split_row("| a | `b | c` | d |")
         self.assertEqual(row, ["a", "`b | c`", "d"])
+
+    def test_headings_and_score_table_content_escaped_and_unsafe_links_blocked(self):
+        def inject_unsafe(text):
+            text = text.replace(
+                "### Synthetic coding suite",
+                "### <script>alert('h')</script> [badhead](javascript:alert(1)) & Score",
+            )
+            text = text.replace(
+                "| Fixture-Alpha | 71.2% |",
+                "| <img src=x onerror=alert(2)> [data](data:text/html,<b>x</b>) [safe](https://example.org/scores?a=1&b=2) | 71.2% |",
+            )
+            return text.replace(
+                "- Fixture-Alpha handles broad implementation fixtures.",
+                "- <svg onload=alert(3)> [rel](references/secret.md)",
+            )
+
+        self.edit(MODELS_REL, inject_unsafe)
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        low = body.lower()
+        self.assertNotIn("<script", low)
+        self.assertNotIn("<img", low)
+        self.assertNotIn("<svg", low)
+        for bad in ('href="javascript', 'href="data:', 'href="references'):
+            self.assertNotIn(bad, low)
+        self.assertIn("&lt;script&gt;alert(&#x27;h&#x27;)&lt;/script&gt; badhead &amp; Score", body)
+        self.assertIn("&lt;img src=x onerror=alert(2)&gt; data", body)
+        self.assertIn("&lt;svg onload=alert(3)&gt; rel", body)
+        self.assertIn('href="https://example.org/scores?a=1&amp;b=2"', body)
+        self.assertIn('rel="noopener noreferrer external"', body)
 
 
 class MissingInputTests(DashboardCase):
@@ -318,6 +432,45 @@ class MissingInputTests(DashboardCase):
         self.assertEqual(resp.status, 200)
         self.assertIn("No local evidence is recorded", body)
         self.assertIn("No sources are recorded", body)
+
+    def test_missing_published_scores_and_selection_reasons_omitted(self):
+        def drop_between(text, start_marker, end_marker):
+            before, rest = text.split(start_marker, 1)
+            _, after = rest.split(end_marker, 1)
+            return before + end_marker + after
+
+        self.edit(MODELS_REL, lambda t: drop_between(t, "## Published scores", "## Selection reasons"))
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        self.assertNotIn("<h3>Published scores</h3>", body)
+        self.assertIn("<h3>Selection reasons</h3>", body)
+
+        (self.tmp / MODELS_REL).write_text(MODELS_FIXTURE, encoding="utf-8")
+        self.edit(MODELS_REL, lambda t: drop_between(t, "## Selection reasons", "## Local evidence"))
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        self.assertIn("<h3>Published scores</h3>", body)
+        self.assertNotIn("<h3>Selection reasons</h3>", body)
+
+        (self.tmp / MODELS_REL).write_text(MODELS_FIXTURE, encoding="utf-8")
+        self.edit(MODELS_REL, lambda t: drop_between(t, "## Published scores", "## Local evidence"))
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        self.assertNotIn("<h3>Published scores</h3>", body)
+        self.assertNotIn("<h3>Selection reasons</h3>", body)
+        self.assertIn("gpt-6.1-sol", body)
+
+    def test_empty_published_scores_section_omitted(self):
+        def empty_scores(text):
+            before, rest = text.split("## Published scores", 1)
+            _, after = rest.split("## Selection reasons", 1)
+            return before + "## Published scores\n\n## Selection reasons" + after
+
+        self.edit(MODELS_REL, empty_scores)
+        resp, body = self.request()
+        self.assertEqual(resp.status, 200)
+        self.assertNotIn("<h3>Published scores</h3>", body)
+        self.assertIn("<h3>Selection reasons</h3>", body)
 
 
 class HttpBoundaryTests(DashboardCase):

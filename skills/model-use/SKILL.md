@@ -13,13 +13,16 @@ An explicit user choice of model or workflow takes precedence over this default.
 ## Round robin
 
 Read [current models](references/models.md) for the dated model/effort choices.
-Alternate new tasks between the other two families:
+Alternate new tasks between the other two families. This is round robin, not a
+preference or fallback order: task 1 uses the first worker, task 2 the second,
+task 3 the first again, and so on. Continue an existing task with its worker;
+route failure is handled separately below.
 
-| Project manager | Worker order, then repeat |
+| Project manager | New-task rotation (repeat) |
 | --- | --- |
-| Codex / OpenAI | Sonnet → Hydrogen |
-| Claude / Anthropic | Sol → Hydrogen |
-| Gemini / Google | Sol → Sonnet |
+| Codex / OpenAI | Sonnet → Hydrogen → Sonnet → Hydrogen → … |
+| Claude / Anthropic | Sol → Hydrogen → Sol → Hydrogen → … |
+| Gemini / Google | Sol → Sonnet → Sol → Sonnet → … |
 
 Identify the manager by its model family, not its CLI: Claude in Antigravity is
 still a Claude manager. Other managers can cycle Sol → Sonnet → Hydrogen.

@@ -163,7 +163,7 @@ def parse_table(lines: list[str]) -> dict:
 
 
 def parse_blocks(lines: list[str]) -> list[dict]:
-    """Return paragraphs, bullet lists and tables; fenced code is dropped."""
+    """Return headings, paragraphs, bullet lists and tables; fenced code is dropped."""
     blocks: list[dict] = []
     para: list[str] = []
     table: list[str] = []
@@ -192,6 +192,9 @@ def parse_blocks(lines: list[str]) -> list[dict]:
         stripped = line.strip()
         if not stripped:
             flush()
+        elif match := re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", stripped):
+            flush()
+            blocks.append({"type": "heading", "level": len(match.group(1)), "text": match.group(2)})
         elif stripped.startswith("|"):
             if para or items:
                 flush()
@@ -217,6 +220,38 @@ def first_table(blocks: list[dict]) -> dict | None:
 def find_section(sections: list[dict], needle: str) -> dict | None:
     needle = needle.lower()
     return next((s for s in sections if s["level"] and needle in s["title"].lower()), None)
+
+
+def collect_section(sections: list[dict], needle: str) -> tuple[str, list[dict]] | None:
+    """Return (title, blocks) for a matching section, including nested subheadings."""
+    needle_low = needle.lower()
+    start = next(
+        (
+            index
+            for index, section in enumerate(sections)
+            if section["level"] == 2 and needle_low in section["title"].lower()
+        ),
+        None,
+    )
+    if start is None:
+        start = next(
+            (
+                index
+                for index, section in enumerate(sections)
+                if section["level"] and needle_low in section["title"].lower()
+            ),
+            None,
+        )
+    if start is None:
+        return None
+    base_level = sections[start]["level"]
+    blocks = parse_blocks(sections[start]["lines"])
+    for sub in sections[start + 1 :]:
+        if sub["level"] <= base_level:
+            break
+        blocks.append({"type": "heading", "level": sub["level"], "text": sub["title"]})
+        blocks.extend(parse_blocks(sub["lines"]))
+    return sections[start]["title"], blocks
 
 
 def sentences(blocks: list[dict]) -> list[str]:
@@ -267,8 +302,8 @@ def parse_sources(skill_text: str, models_text: str) -> dict:
     table_index = models_blocks.index(models)
 
     def blocks_of(needle: str) -> list[dict]:
-        section = find_section(models_sections, needle)
-        return parse_blocks(section["lines"]) if section else []
+        found = collect_section(models_sections, needle)
+        return found[1] if found else []
 
     return {
         "rotation": rotation,
@@ -277,6 +312,8 @@ def parse_sources(skill_text: str, models_text: str) -> dict:
         "models": models,
         "models_before": models_blocks[:table_index],
         "models_after": models_blocks[table_index + 1 :],
+        "published_scores": collect_section(models_sections, "published scores"),
+        "selection_reasons": collect_section(models_sections, "selection reasons"),
         "evidence": blocks_of("local evidence"),
         "sources": blocks_of("assessment sources"),
     }
@@ -336,16 +373,31 @@ def render_table(table: dict, label: str) -> str:
     )
 
 
-def render_blocks(blocks: list[dict], label: str = "Table") -> str:
+def render_blocks(blocks: list[dict], label: str = "Table", heading_offset: int = 0) -> str:
     out = []
+    current_label = label
     for block in blocks:
-        if block["type"] == "p":
+        if block["type"] == "heading":
+            tag_level = min(6, max(3, block["level"] + heading_offset))
+            current_label = block["text"]
+            out.append(f"<h{tag_level}>{inline(block['text'])}</h{tag_level}>")
+        elif block["type"] == "p":
             out.append(f"<p>{inline(block['text'])}</p>")
         elif block["type"] == "ul":
             out.append("<ul>" + "".join(f"<li>{inline(i)}</li>" for i in block["items"]) + "</ul>")
         elif block["type"] == "table":
-            out.append(render_table(block, label))
+            out.append(render_table(block, current_label))
     return "\n".join(out)
+
+
+def render_subsection(section: tuple[str, list[dict]] | None) -> str:
+    if not section:
+        return ""
+    title, blocks = section
+    body = render_blocks(blocks, label=title, heading_offset=1)
+    if not body:
+        return ""
+    return f'<div class="rec-sub">\n<h3>{inline(title)}</h3>\n{body}\n</div>'
 
 
 def render_rules(rules: list[tuple[str, str]]) -> str:
@@ -397,6 +449,8 @@ def render_page(repo_root: Path, today: datetime.date | None = None) -> str:
         "MODELS_INTRO": render_blocks(data["models_before"]),
         "MODELS_TABLE": render_table(data["models"], "Recommended models, routes and efforts"),
         "ESCALATION": render_blocks(data["models_after"]),
+        "PUBLISHED_SCORES": render_subsection(data["published_scores"]),
+        "SELECTION_REASONS": render_subsection(data["selection_reasons"]),
         "ASSESSOR": render_assessor(data["models"]),
         "EVIDENCE": evidence,
         "SOURCES": sources,

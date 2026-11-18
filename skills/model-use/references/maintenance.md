@@ -48,7 +48,16 @@ consistent with the policy when a user-authorized policy change occurs.
    feedback. Skip blocked authentication and record what remains unverified.
 5. Update only demonstrated facts or well-supported recommendations. Keep the
    report in the model reference short: assessment date, what changed, evidence,
-   local checks and uncertainty. If nothing material changed, leave files alone;
+   local checks and uncertainty. Maintain its Published scores and Selection
+   reasons sections: exact model/effort/agent, current benchmark names/versions,
+   linked primary sources, capability scores, and reported token/time/API-cost
+   evidence. Label unmatched daily settings unknown and separate fallback-enabled
+   or different-effort runs; do not mix an API price with subscription allowance.
+   Explain how user experience, budget and access affect each choice, including
+   disagreements with metrics. Preserve a compact dated public-data snapshot
+   under `docs/model-scores/` when figures materially change; record source URL,
+   retrieval date, raw scores and CLI versions where available. If nothing
+   material changed, leave files alone;
    a brief run result can record that sources were checked. Do not churn dates
    and commits solely to look current or expand benchmark coverage indefinitely.
 6. Validate changed skills with skill-creator when available, check relative

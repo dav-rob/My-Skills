@@ -143,6 +143,11 @@ current model/effort recommendations, assessment date and evidence. The read-onl
 page renders directly from the skill files on each request; the weekly review
 checks it without generating a second copy of the recommendations. Serving it
 uses no model tokens, external assets or third-party Python packages.
+The rotation table shows repeating new-task assignments, separately from route
+failover. Published capability/efficiency scores and the reasons for keeping each
+choice appear below Current recommendations, with exact efforts and sources.
+Compact dated evidence snapshots live in `docs/model-scores/`; missing matched
+configurations are unknown rather than inferred from a model's highest setting.
 
 ```sh
 python3 dashboard/server.py                    # foreground, localhost only

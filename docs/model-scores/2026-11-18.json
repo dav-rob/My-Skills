@@ -1,0 +1,281 @@
+{
+  "source_url": "https://artificialanalysis.ai/agents/coding-agents",
+  "methodology_url": "https://artificialanalysis.ai/methodology/coding-agents-benchmarking",
+  "suite": "Artificial Analysis Coding Agent Index v2.1",
+  "checked_on": "2026-11-18",
+  "retrieved_at_utc": "2026-11-18T15:12:00.568235+00:00",
+  "source_html_sha256": "556cd19515bb39cb622feb348f88da164b7559abdfa8fff6813f28d2440025c6",
+  "extraction": "Public page chart props (benchmarkRows) in server-rendered Next.js data; no private API or inferred scores. Retained fraction-valued source scores before display rounding.",
+  "labels": {
+    "frontiercode-v2.0": "FrontierCode-AA 2.0",
+    "swe-atlas-qna": "SWE-Atlas-QnA-AA",
+    "terminal-bench-v4": "Terminal-Bench 4.1 (public v2.1 suite label; internal dataset key remains v4)"
+  },
+  "notes": [
+    "These rows use max/xhigh or candidate Sol 6.2 efforts, not the daily high configurations of the three selected families.",
+    "Claude default fallback can finish some attempts using another model.",
+    "API USD costs and reported tokens are not monthly subscription prices or remaining allowance."
+  ],
+  "rows": [
+    {
+      "configuration": "Codex - GPT-6.1 Sol (Max)",
+      "index_score": 0.52159890300858,
+      "benchmarks": {
+        "frontiercode-v2.0": 0.424930303030303,
+        "swe-atlas-qna": 0.599462365591398,
+        "terminal-bench-v4": 0.54040404040404
+      },
+      "mean": {
+        "reward": 0.52159890300858,
+        "costUsd": 1.5065869065928608,
+        "agentWallTimeSec": 1313.97312170088,
+        "steps": 42.9780058651026,
+        "inputTokens": 4268954.72407131,
+        "outputTokens": 56578.3447590661,
+        "cacheTokens": 4062496.93074184,
+        "cacheHitRate": 0.927081670090333,
+        "totalTokens": 4325533.06883038
+      },
+      "cli_versions": {
+        "frontiercode-v2.0": {
+          "min": {
+            "version": "0.154.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.154.0",
+            "dateReleased": null
+          }
+        },
+        "swe-atlas-qna": {
+          "min": {
+            "version": "0.154.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.154.0",
+            "dateReleased": null
+          }
+        },
+        "terminal-bench-v4": {
+          "min": {
+            "version": "0.154.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.154.0",
+            "dateReleased": null
+          }
+        }
+      }
+    },
+    {
+      "configuration": "Claude Code - Claude Sonnet 5.5 (Max, Default Fallback)",
+      "index_score": 0.563314945150429,
+      "benchmarks": {
+        "frontiercode-v2.0": 0.390906060606061,
+        "swe-atlas-qna": 0.64247311827957,
+        "terminal-bench-v4": 0.656565656565656
+      },
+      "mean": {
+        "reward": 0.563314945150429,
+        "costUsd": 11.39857189877927,
+        "agentWallTimeSec": 5207.27759492777,
+        "steps": 249.40720375801,
+        "inputTokens": 25811986.1442245,
+        "outputTokens": 553838.663408276,
+        "cacheTokens": 24752277.7875122,
+        "cacheHitRate": 0.951764740084977,
+        "totalTokens": 26365824.8076328
+      },
+      "cli_versions": {
+        "frontiercode-v2.0": {
+          "min": {
+            "version": "2.1.280",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "2.1.280",
+            "dateReleased": null
+          }
+        },
+        "swe-atlas-qna": {
+          "min": {
+            "version": "2.1.280",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "2.1.280",
+            "dateReleased": null
+          }
+        },
+        "terminal-bench-v4": {
+          "min": {
+            "version": "2.1.280",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "2.1.280",
+            "dateReleased": null
+          }
+        }
+      }
+    },
+    {
+      "configuration": "Antigravity CLI - Gemini 4 Hydrogen (Xhigh)",
+      "index_score": 0.523166593352884,
+      "benchmarks": {
+        "frontiercode-v2.0": 0.366339141414142,
+        "swe-atlas-qna": 0.602150537634409,
+        "terminal-bench-v4": 0.601010101010101
+      },
+      "mean": {
+        "reward": 0.523166593352884,
+        "costUsd": 4.452750169905282,
+        "agentWallTimeSec": 1926.29897686543,
+        "steps": 405.488242641468,
+        "inputTokens": 18337890.529054,
+        "outputTokens": 199052.748343652,
+        "cacheTokens": 17238396.4604377,
+        "cacheHitRate": 0.932813768703189,
+        "totalTokens": 18536943.2773976
+      },
+      "cli_versions": {
+        "frontiercode-v2.0": {
+          "min": {
+            "version": "1.5.8",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "1.5.8",
+            "dateReleased": null
+          }
+        },
+        "swe-atlas-qna": {
+          "min": {
+            "version": "1.5.8",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "1.5.8",
+            "dateReleased": null
+          }
+        },
+        "terminal-bench-v4": {
+          "min": {
+            "version": "1.5.8",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "1.5.8",
+            "dateReleased": null
+          }
+        }
+      }
+    },
+    {
+      "configuration": "Codex - GPT-6.2 Sol (High)",
+      "index_score": 0.47455238405561,
+      "benchmarks": {
+        "frontiercode-v2.0": 0.382927272727273,
+        "swe-atlas-qna": 0.505376344086022,
+        "terminal-bench-v4": 0.535353535353535
+      },
+      "mean": {
+        "reward": 0.47455238405561,
+        "costUsd": 0.7638440246776945,
+        "agentWallTimeSec": 635.375702943413,
+        "steps": 42.3476430976431,
+        "inputTokens": 2940974.48246122,
+        "outputTokens": 20022.2222912182,
+        "cacheTokens": 2847192.73851907,
+        "cacheHitRate": 0.943341325243881,
+        "totalTokens": 2960996.70475244
+      },
+      "cli_versions": {
+        "frontiercode-v2.0": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        },
+        "swe-atlas-qna": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        },
+        "terminal-bench-v4": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        }
+      }
+    },
+    {
+      "configuration": "Codex - GPT-6.2 Sol (Xhigh)",
+      "index_score": 0.497854108287173,
+      "benchmarks": {
+        "frontiercode-v2.0": 0.404363888888889,
+        "swe-atlas-qna": 0.513440860215054,
+        "terminal-bench-v4": 0.575757575757576
+      },
+      "mean": {
+        "reward": 0.497854108287173,
+        "costUsd": 0.8980194131553201,
+        "agentWallTimeSec": 755.824669517758,
+        "steps": 42.627375909634,
+        "inputTokens": 3235624.85012695,
+        "outputTokens": 26215.5655461721,
+        "cacheTokens": 3123101.90638627,
+        "cacheHitRate": 0.943651091388689,
+        "totalTokens": 3261840.41567312
+      },
+      "cli_versions": {
+        "frontiercode-v2.0": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        },
+        "swe-atlas-qna": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        },
+        "terminal-bench-v4": {
+          "min": {
+            "version": "0.166.0",
+            "dateReleased": null
+          },
+          "max": {
+            "version": "0.166.0",
+            "dateReleased": null
+          }
+        }
+      }
+    }
+  ]
+}
