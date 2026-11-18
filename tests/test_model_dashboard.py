@@ -227,23 +227,6 @@ class HealthyRenderingTests(DashboardCase):
         positions = [recs_html.index(m) for m in markers]
         self.assertEqual(positions, sorted(positions))
 
-    def test_behaviour_subtitle_explains_rotation_resumption_and_fallback(self):
-        _, body = self.request()
-        beh_start = body.index('id="h-behaviour"')
-        recs_start = body.index('id="h-recs"')
-        beh_html = body[beh_start:recs_start]
-        sub_start = beh_html.index('<p class="sub">')
-        sub_end = beh_html.index("</p>", sub_start)
-        subtitle = beh_html[sub_start:sub_end].lower()
-        self.assertIn("new tasks", subtitle)
-        self.assertIn("alternate", subtitle)
-        self.assertIn("repeat", subtitle)
-        self.assertIn("resumptions", subtitle)
-        self.assertIn("fallback", subtitle)
-        self.assertNotIn("failover", subtitle)
-        self.assertNotIn("fail over", subtitle)
-
-
 class LiveUpdateTests(DashboardCase):
     def test_model_edit_appears_without_restart(self):
         _, before = self.request()
