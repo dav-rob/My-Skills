@@ -26,6 +26,8 @@ results. Higher scores are better; compare models within a column, not raw
 percentages across columns with different tasks and scoring.
 All five recorded configurations, raw capability scores, efficiency means and
 harness versions are unchanged from the 18 November public-data snapshot.
+Neon/xhigh is newly recorded as a public challenger; its local route and daily
+high configuration have not been verified.
 
 ### Coding abilities
 
@@ -36,6 +38,7 @@ harness versions are unchanged from the 18 November public-data snapshot.
 | Hydrogen / xhigh / Antigravity | 36.6% | 60.2% | 60.1% |
 | Sol 6.2 / high / Codex (candidate) | 38.3% | 50.5% | 53.5% |
 | Sol 6.2 / xhigh / Codex (candidate) | 40.4% | 51.3% | 57.6% |
+| Gemini 4 Neon / xhigh / Antigravity (candidate) | 43.0% | 67.7% | 65.2% |
 
 Daily-setting coverage: the retrieved board has no matching rows for Sol 6.1/high
 or xhigh, Sonnet 5.5/high, or Hydrogen/high. The max/xhigh rows above are context,
@@ -56,6 +59,7 @@ not a change to the main round robin or CLI availability fallback.
 | Hydrogen / xhigh / Antigravity | 199.1k | 32.1 min | $4.45 |
 | Sol 6.2 / high / Codex (candidate) | 20.0k | 10.6 min | $0.76 |
 | Sol 6.2 / xhigh / Codex (candidate) | 26.2k | 12.6 min | $0.90 |
+| Gemini 4 Neon / xhigh / Antigravity (candidate) | 125.6k | 30.5 min | $6.86 |
 
 These are averages across the same three-benchmark suite; k means 1,000 tokens.
 Agent time is wall time, not time to first token. API cost is an efficiency
@@ -76,9 +80,10 @@ We have not assigned made-up weights or estimated tasks per subscription.
 | Choice | Why it stays in the rotation | What the metrics do and do not support |
 | --- | --- | --- |
 | Sol 6.1 / high, xhigh for harder work | The user's established workhorse, a working Codex route, and a way to reserve the interactive manager for coordination. | Its published max run is strongest on implementation among the three family reference runs and uses fewer output tokens; that does not establish the same advantage at high. |
-| Sonnet 5.5 / high | The user's trusted app builder; the dashboard implementation also completed with manager review and corrections. Claude and agy offer alternative access routes within one slot. | The published max/fallback run leads these reference runs on repository understanding and terminal work, but consumes substantially more output tokens and time. That does not prove Sonnet high is best, or predict its subscription allowance. |
+| Sonnet 5.5 / high | The user's trusted app builder; the dashboard implementation also completed with manager review and corrections. Claude and agy offer alternative access routes within one slot. | The published max/fallback run leads the three selected-family reference runs on repository understanding and terminal work; Neon/xhigh exceeds its repository score. Sonnet's larger output-token/time use does not prove high is best or predict its subscription allowance. |
 | Hydrogen / high | The user reports strong practical results and wants regular use of the Gemini subscription. It receives alternating tasks, not just fallback work. | The xhigh reference supplies coding evidence and uses more output tokens than the Sol max run. Different benchmark difficulty prevents treating the columns as ability ratios. High remains a practical starting choice; its exact coding-agent score is unknown here. |
 | Sol 6.2 / high or xhigh | A candidate to trial, not an unannounced replacement for the user's Sol 6.1 choice. | The published rows show a promising lower-token/lower-time option, with different scores by ability. Effort differences and lack of a matched local app trial prevent a blanket upgrade conclusion. |
+| Gemini 4 Neon / xhigh | A public Gemini challenger for a future bounded trial; Hydrogen remains the user's selected worker. Current agy discovery requires sign-in, so this pass cannot establish local access or run a trial. | The same-suite xhigh row beats Hydrogen/xhigh in all three capabilities, with fewer output tokens and slightly less agent time, but higher API cost. It is not evidence for Neon/high or a subscription-budget improvement; no matched local app trial supports replacing Hydrogen. |
 
 Decision for this assessment: keep the selected settings and round robin. A
 credible improvement should be tried on a bounded representative app task with
@@ -108,6 +113,11 @@ documents disabling automatic refusal fallback. These were reviewed on 23 Novemb
 no early-stop or refusal case was induced. Codex help/release review found no
 needed invocation change; Cursor/OpenCode had no relevant trigger this pass.
 No recommendation changed and no new app benchmark was run.
+Neon's public xhigh row was recovered from the chart's highlighted-row references,
+alongside the ordinary row objects. The current six-row evidence snapshot is
+`docs/model-scores/2026-11-23.json`; no live Neon request was attempted through the
+authentication-blocked agy route. Published Neon uses agy 1.5.8, whereas this
+machine has 1.5.11; harness version alone does not establish local entitlement.
 
 Historical discovery on 2026-11-18 used Codex 0.168.0, Claude Code 2.1.323 and agy 1.5.11.
 Codex's app-server exposed Sol 6.1 with `high` and `xhigh`; Claude initialization
