@@ -12,6 +12,9 @@ listing, exit statuses and `--json-schema` behaviour were re-checked on 1.4.0 on
 The CLI updates itself between runs, so record `agy --version` with every run and re-verify
 after a change. Inference uses cached authentication; report an auth error to the caller
 instead of opening an unattended login flow.
+On 2026-11-23, 1.5.11 help and published release notes were checked; `agy models`
+required sign-in, so current catalog and inference checks were blocked. The newer
+behaviors identified below are release-reported, not newly exercised live.
 
 ## Model and effort
 
@@ -26,8 +29,10 @@ unless the result states it. Verify the pair with a small non-mutating headless 
 when exact support is uncertain.
 
 The installed parser advertises `low`, `medium`, `high`, `xhigh`, `max`, while
-the fetched catalog here offered low/medium/high variants (some families only
-low/high). Parser acceptance is not model support. Do not infer GPT-6.1 Sol
+the 1.4.0 catalog offered low/medium/high variants (some families only low/high).
+Newer catalogs can offer more: the 1.5.8 release notes add Hydrogen through xhigh
+for specified authentication routes. Discover the active route rather than
+assuming either catalog applies. Parser acceptance is not model support. Do not infer GPT-6.1 Sol
 availability from a Codex/Cursor catalog or invent model variants. Reject or
 report unsupported pairs rather than silently falling back. Report the selected
 slug and effort separately to the caller.
@@ -45,10 +50,14 @@ work and approves all tools, including writes and commands. `--mode` offers `pla
 commands but reviews commands that would leave the sandbox; `auto` was not tested
 headless. `--mode plan` adds planning instructions; don't treat it as an enforced
 read-only boundary.
+The 1.5.7 release notes make Auto the default where available, including headless
+runs without a saved mode. Select the mode explicitly when its behavior matters.
 `--sandbox` restricts terminal execution and does not grant browser/tool approval.
 Use permissions appropriate to the authorized task; don't silently widen global
 allow rules to fix a headless denial. Successful inference alone doesn't establish
 authenticated browser, Keychain or locked-screen GUI access.
+Explicit deny rules and enterprise requirements for human review can still block
+actions under the bypass flag (1.5.2); it is not authority to override them.
 
 For progress, use `--output-format stream-json`. To send prompts over stdin,
 also set `--input-format stream-json`, omit `--print`, and serialize one NDJSON
@@ -81,7 +90,12 @@ relying on `structured_output`: a schema Gemini rejects fails every run.
 ## Feedback and limits
 
 For JSON require exit 0 and `status: "SUCCESS"`. Extract `response`,
-`conversation_id`, `usage` and any `error`. Other statuses, missing/malformed
+`conversation_id`, `usage`, `finished_reason` and any `error`. From 1.4.11,
+`finished_reason` identifies an early stop: `print_timeout`, `interrupted`, or
+`error`; it is omitted on normal completion. An early-stop reason makes a partial
+answer timed out, interrupted or failed even if another field looks successful.
+Preserve unknown reasons as incomplete rather than assuming success.
+Other statuses, missing/malformed
 JSON, cancellation and deadline expiry are failures or incomplete runs.
 For stream-json the terminal envelope is `event: "result"` with the result under
 `result`; this differs from Claude/Cursor's `type: "result"`. Intermediate
@@ -95,14 +109,19 @@ Exit statuses seen on 1.4.0: 0 success; 1 a rejection by the CLI before any requ
 (invalid or contradictory model/effort, unknown `--agent`); 2 a print-mode usage error
 such as `--print` with `--prompt-interactive`; 3 a provider request error returned with
 an `ERROR` envelope (for example an invalid schema). Read the envelope, not the code alone.
-The changelog (`agy changelog`, not independently re-checked) adds that 1.3.3 reports an
+The changelog (`agy changelog`, checked 2026-11-23) adds that 1.3.3 reports an
 individual quota limit at once and words an expired sign-in as `Authentication expired.
 Please log back in.`, that 1.3.6 cancels and retries a model request that stalls for five
 minutes (so a run can take longer without failing), and that headless `-p` runs skip
 subagent questions.
+The published 1.5.0 notes report exit 3 plus an `AGY_ERROR` line and stderr
+diagnostic when `--print-timeout` terminates background tasks; without an explicit
+timeout print mode waits for that work. Exit 3 alone therefore does not establish
+a provider error. In 1.5.5, shutdown after printing a result is bounded to 30
+seconds; retain the external deadline and require process exit as well as a result.
 
 Return `status`, `exit_code`, `model`, `effort`, `session_id` (conversation ID),
-`usage`, `answer`, `error`, and retry/reset timing when reported. In a continued
+`usage`, `answer`, `error`, `finished_reason`, and retry/reset timing when reported. In a continued
 session counters may be cumulative; don't sum cumulative results or double-count
 thinking tokens included in output. Missing counters are unknown, not zero.
 
@@ -121,6 +140,12 @@ to test recovery.
 
 [Official headless guide](https://antigravity.google/docs/cli/headless/)
 and [CLI reference](https://antigravity.google/docs/cli/reference).
+Release-reported updates checked 2026-11-23: [1.4.11, 30 October](https://antigravity.google/docs/changelog/#rel-cli-1.4.11),
+[1.5.0, 4 November](https://antigravity.google/docs/changelog/#rel-cli-1.5.0),
+[1.5.2, 6 November](https://antigravity.google/docs/changelog/#rel-cli-1.5.2),
+[1.5.5, 10 November](https://antigravity.google/docs/changelog/#rel-cli-1.5.5),
+[1.5.7, 12 November](https://antigravity.google/docs/changelog/#rel-cli-1.5.7),
+and [1.5.8, 13 November 2026](https://antigravity.google/docs/changelog/#rel-cli-1.5.8).
 Verified model listing, a `gemini-3.8-flash-high`/`high` JSON success, and invalid
 effort returning exit 1 plus `status: "ERROR"`. Streaming success, `/usage`, and
 a contradictory model/effort pair failing before inference were also verified.

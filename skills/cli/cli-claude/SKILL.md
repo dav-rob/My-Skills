@@ -8,6 +8,8 @@ description: Invoke Claude Code CLI from another AI or script, discover model-sp
 Check `command -v claude`, `claude --version`, `claude --help`, and authentication
 with `claude auth status`. Avoid logging its account-identifying fields.
 The tested binary was 2.1.294 on 2026-10-08.
+Help and initialization discovery were rechecked on 2.1.323 on 2026-11-23;
+the original live verification below retains its own scope.
 
 ## Model and effort discovery
 
@@ -28,9 +30,20 @@ resolved model and `per_turn_effort_active`, but did not echo the effective leve
 If a cap prevents the requested pair, report it instead of claiming the exact
 request ran. `ultracode` is a workflow setting, not an ordinary reasoning level.
 
+Model fallback is separate from effort support. Claude can automatically switch
+models after a flagged refusal, even without `--fallback-model`. For an exact-model
+assignment, set `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` in that child process's
+environment (documented in the 2.1.312 changelog), and do not add `--fallback-model`
+unless authorized. Preserve a refusal as the outcome. Inspect assistant model
+metadata and `modelUsage` for models actually used; startup resolution alone does
+not prove the whole run stayed on that model. If a switch occurs, report it rather
+than attributing the result solely to the requested model. This provider behavior
+is distinct from a manager's round robin or its CLI availability fallback.
+
 ## Run a task
 
 ```sh
+CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1 \
 claude --print --model "$model" --effort "$effort" \
   --output-format stream-json --verbose \
   --dangerously-skip-permissions "$prompt" </dev/null
@@ -90,6 +103,13 @@ retrying edits, inspect what already changed; respect reported backoff/resets.
 [Official CLI reference](https://code.claude.com/docs/en/cli-reference),
 [model configuration](https://code.claude.com/docs/en/model-config), and
 [headless protocol](https://code.claude.com/docs/en/headless).
+The [official changelog, 2.1.312](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#21312)
+documents the refusal-fallback switch; reviewed 2026-11-23. A normal smoke request
+cannot establish refusal handling; no refusal or quota exhaustion was induced.
+The new Sonnet 5.5/high no-tools smoke with fallback disabled reached startup on
+2.1.323, then timed out at 55 seconds with no terminal result or usage. The owned
+process group was stopped/reaped. Effective effort and current inference success
+remain unverified; startup and authentication success do not establish completion.
 Verified help, initialization model/effort discovery, structured auth failure,
 and authenticated Sonnet 5.5/high JSON and Haiku 5.5/low streaming requests. Both
 returned the expected answer, exit 0, successful terminal result, usage and
