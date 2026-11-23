@@ -47,3 +47,12 @@ short deadlines. Explicit discovered free models later completed, and local
 Qwen3.6 needed a longer deadline. Qwen3.8 still missed 90 seconds.
 Conclusion: Refresh discovery, pin a selected model, and distinguish timeout from
 authentication/quota errors. Start events never establish success.
+
+
+What was tried: Reading only object-valued Artificial Analysis benchmarkRows.
+Why: Extract selected public chart data without a private API or browser scripts.
+What happened: Highlighted rows were RSC references to another section in the same
+response; object-only extraction omitted Neon/xhigh and other public variants.
+Conclusion: Resolve references such as `$31:props:children:props:rows:N` before
+claiming a configuration is absent. Keep raw fractions and provenance in the
+selected dated snapshot; do not invent scores for still-missing daily settings.

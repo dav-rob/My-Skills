@@ -1,76 +1,52 @@
 # Current
 
-The latest change is `3407c94` (2026-11-18): explicit repeating round-robin task
-sequences and visible Published scores / Selection reasons under Current
-recommendations. `docs/model-scores/2026-11-18.json` retains selected public AA
-coding-agent chart data, source hash/date, exact fractions and CLI versions.
-Daily high configurations lack matched rows in that retrieved board; published
-max/xhigh runs are labelled as context and Sonnet default fallback is disclosed.
-Policy and model choices are unchanged. The weekly procedure/prompt maintains
-scores, provenance and reasons alongside budget/experience tradeoffs.
+Weekly maintenance completed on 2026-11-23. The round robin and daily settings
+remain Sol 6.1/high (xhigh for justified escalation), Sonnet 5.5/high and Gemini 4
+Hydrogen/high. The standalone assessor worked directly; rotation state was not
+advanced. The local Monday 09:00 automation is `weekly-model-and-cli-skill-maintenance`,
+configured for Sol 6.1/xhigh and this checkout.
 
-Hydrogen/high through agy implemented the renderer/test changes after Sonnet's
-earlier dashboard task; the next Codex-manager slot is Sonnet. Full regression
-checks passed before removing one wording-only assertion; final 42 dashboard
-checks passed with warnings as errors. All 30 displayed values matched the
-primary-source snapshot; live HTTP and browser accessibility checks passed.
-The updated model-use skill passed audit and was reinstalled into all eight
-paths at `1104439`, whose skill tree equals `3407c94`. All 32 files, flat names
-and exact commit/tree pins were verified.
+Published changes:
 
+- `57f4669`: Antigravity partial-result/timeout contracts, default Auto and review
+  constraints; Claude exact-model refusal-fallback handling and verification limits.
+- `8e64268`: dated weekly discovery/evidence and route limitations; choices retained.
+- `8b0a32e`: Gemini 4 Neon/xhigh candidate scores and a six-row public snapshot at
+  `docs/model-scores/2026-11-23.json`. The five prior configurations are unchanged.
 
-The latest addition is the local model-use dashboard (`32e3c5c`, 2026-11-18),
-served at `http://127.0.0.1:48173/`. It renders the canonical skill/model notes
-on each request using Python standard library only, without model calls or
-external assets. Its per-user macOS service starts at login and restarts after
-exit; restart recovery and loopback-only listening were verified. The existing
-weekly automation now checks the page and `/healthz`, including no-change runs.
-Full tests passed (86); the revised 37 dashboard tests also passed with warnings
-as errors. Browser layout and live source consistency were checked.
+Neon/xhigh beats Hydrogen/xhigh on all three AA v2.1 components, using fewer
+output tokens and slightly less runtime, but higher API cost. Local access and
+Neon/high are unverified. No app trial supports replacing the user's selection.
+Matched public rows remain absent for daily high settings and Sonnet via agy.
 
-The underlying coordination skill is `model-use`, pushed as `5475424` on 2026-11-18. The
-interactive model remains project manager and alternates substantial coding
-tasks between the other two families: Codex uses Sonnet/Hydrogen; Claude uses
-Sol/Hydrogen; Gemini uses Sol/Sonnet. Sonnet's Claude/agy routes share one slot.
-Local state records next-family pointers, unavailable routes and resumable work.
-There is one bounded recovery resume and a single fallback pass, then the manager
-works directly if its own allowance permits. This is an instruction-only skill.
+Codex 0.168.0 and Claude 2.1.323 read-only discovery confirmed selected support.
+agy 1.5.11 model discovery required sign-in, blocking both agy route checks and a
+Neon trial. The no-tools Sonnet/high smoke with refusal fallback disabled reached
+startup but timed out after 55 seconds; process group stopped/reaped, no terminal
+result or usage. This does not diagnose quota. No accounts, credits or binaries
+were changed. Cursor/OpenCode had no relevant trigger.
 
-Starting choices are Sol 6.1/high (xhigh when justified), Sonnet 5.5/high, and
-Gemini 4 Hydrogen/high. All four CLI routes passed live smoke checks against
-Codex 0.168.0, Claude 2.1.323 and agy 1.5.11. Independent behavioral checks covered
-rotation, route fallbacks, manager identity, limits, interruption, missing
-terminal events and unchanged maintenance. Validation, relative references,
-format dry-run, static scan and diff checks passed. No app benchmark or deliberate
-quota exhaustion is claimed. That original skill was instruction-only; the
-dashboard is a separate repository runtime, not an installed worker dispatcher.
+All three changed skills passed gh format validation and explicit skillstrap
+format/static audits, then were installed into all eight configured paths.
+cli-claude and cli-antigravity are pinned to `8e64268`; model-use to `8b0a32e`.
+All 72 files, flat names, reference bytes, normalized source bodies, commit/tree
+pins and all 24 gh listings were verified. Unchanged installed skills were left
+alone. The skill-creator Python validator could not run because PyYAML is absent;
+no dependency was installed. gh validation passed with existing advisory warnings.
 
-The active local Codex automation `weekly-model-and-cli-skill-maintenance` targets
-this project on Mondays at 09:00, using `gpt-6.1-sol` / `xhigh`. Its procedure is
-`skills/model-use/references/maintenance.md`: use Artificial Analysis's current
-coding evaluations, exclude DeepSWE, preserve choices without meaningful new
-evidence, maintain only the model table and five CLI skills, and audit/reinstall
-only changed skills after validation and publication.
+The read-only dashboard remains at http://127.0.0.1:48173/, reading canonical
+Markdown per request. No hosting code, service configuration or policy summary
+changed. The 42 dashboard tests passed with warnings as errors. Health/home,
+23 November assessment date, all four model/effort/route rows and all 36 score /
+efficiency values passed live checks; one existing loopback listener remains.
 
-Installation is complete after the user renewed GitHub CLI authentication.
-Skillstrap format/static audits passed and model-use was installed flat into all
-eight configured paths at `c5f2990`, whose skill tree equals `5475424`. All 32 files
-were verified against source (normalizing only the SKILL.md YAML/body boundary),
-including exact commit/tree metadata, flat listing identity and intact references.
-Installed skillstrap list succeeds. The weekly automation remains active.
-The dashboard maintenance reference was audited/reinstalled into those same paths
-at `32e3c5c`; all 32 files, source bodies, supporting files, flat identities and
-commit/tree pins were verified. The original policy/model choices are unchanged.
+The remaining programme is bounded weekly model/CLI upkeep using
+`skills/model-use/references/maintenance.md`. Before a Neon trial, restore agy
+sign-in interactively, rediscover model/effort support and use an isolated app
+task with acceptance checks. Do not infer application competence, effective
+effort or subscription allowance from startup or higher-effort public rows.
 
-The prior CLI and installer state is documented in `docs/CLI-SKILLS.md`, Git and
-the durable handoff files. The latest Antigravity skill was reinstalled at
-`d146697` after agy 1.4.0 schema verification (`afcc154`). The five CLI skills
-retain their independently dated verification scopes; discovery/smoke checks
-above do not revalidate every feature. Cursor authentication remains unconfirmed.
-
-Configurable paths remain as implemented in `29424e8`: eight defaults including
-scheduled jobs, explicit audited commit pins and destination preflight. Removing
-a path leaves content in place. Bootstrap installs the command only. The vision
-remains any GitHub source and every compatible tool, with safety and security
-foremost. Static audits remain incomplete and sequential installs can partially
-succeed.
+Installer design and stable CLI verification scopes are in README.md,
+docs/CLI-SKILLS.md, DECISIONS.md and Git. Eight configured installation roots,
+audited exact pins and destination preflight remain in place. The vision remains
+any GitHub source and every compatible tool, with safety and security foremost.
