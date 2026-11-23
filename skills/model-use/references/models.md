@@ -1,7 +1,7 @@
 # Current workhorses
 
-Assessed: 2026-11-18. Current choices combine the user's experience, existing
-subscriptions and verified CLI access. Published scores and the reasons for
+Assessed: 2026-11-23. Current choices combine the user's experience, existing
+subscriptions and previously verified CLI access. Published scores and the reasons for
 keeping these settings are below; the choices are not a ranking by benchmark
 score. Recheck discovery when an ID stops working or a recommendation is stale.
 
@@ -20,10 +20,12 @@ does not replace the user's interactive manager or add ordinary rotation slots.
 
 ## Published scores
 
-Checked 18 November 2026 against the [Artificial Analysis coding-agent board](https://artificialanalysis.ai/agents/coding-agents),
+Checked 23 November 2026 against the [Artificial Analysis coding-agent board](https://artificialanalysis.ai/agents/coding-agents),
 Coding Agent Index v2.1. Scores below are published agent runs, not local test
 results. Higher scores are better; compare models within a column, not raw
 percentages across columns with different tasks and scoring.
+All five recorded configurations, raw capability scores, efficiency means and
+harness versions are unchanged from the 18 November public-data snapshot.
 
 ### Coding abilities
 
@@ -41,6 +43,9 @@ not scores attributed to our daily settings. No matching Sonnet-through-agy row
 was retrieved either. Missing means unknown, not zero. Sonnet's published
 "default fallback" configuration can finish some attempts with another model;
 it is not a pure Sonnet-only result.
+Exact-model Claude assignments now disable automatic refusal fallback through
+`cli-claude`; this is another difference from the published fallback-enabled run,
+not a change to the main round robin or CLI availability fallback.
 
 ### Efficiency and budget
 
@@ -83,12 +88,33 @@ that disagreement by relabelling a preference as a benchmark result.
 
 ## Local evidence
 
-Discovery on 2026-11-18 used Codex 0.168.0, Claude Code 2.1.323 and agy 1.5.11.
+The 2026-11-23 pass found the same installed versions: Codex 0.168.0, Claude Code
+2.1.323 and agy 1.5.11. Read-only discovery again exposed Sol 6.1/high/xhigh and
+Sonnet 5.5/high; Codex's quota read succeeded without establishing future allowance.
+Antigravity's model listing required sign-in, so neither agy route's current
+catalog or inference availability was reverified. No login or account switch was
+attempted. A single no-tools Sonnet/high check with refusal fallback disabled
+reached startup on `claude-sonnet-5-5` with per-turn effort active, but missed its
+55-second external deadline. The owned process group was stopped and reaped;
+there was no terminal result or reported token usage. This is incomplete, not a
+quota diagnosis or a competence measurement; effective effort remains unknown.
+
+The CLI review added release-reported Antigravity partial-result/timeout handling
+and Claude exact-model refusal-fallback guidance. The [Antigravity 1.4.11 notes,
+30 October 2026](https://antigravity.google/docs/changelog/#rel-cli-1.4.11) introduce
+`finished_reason`; [1.5.0, 4 November](https://antigravity.google/docs/changelog/#rel-cli-1.5.0)
+changes print timeout/background completion. The [Claude 2.1.312 changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#21312)
+documents disabling automatic refusal fallback. These were reviewed on 23 November;
+no early-stop or refusal case was induced. Codex help/release review found no
+needed invocation change; Cursor/OpenCode had no relevant trigger this pass.
+No recommendation changed and no new app benchmark was run.
+
+Historical discovery on 2026-11-18 used Codex 0.168.0, Claude Code 2.1.323 and agy 1.5.11.
 Codex's app-server exposed Sol 6.1 with `high` and `xhigh`; Claude initialization
 resolved Sonnet to `claude-sonnet-5-5` with `high`; `agy models` exposed both
 Sonnet 5.5/high and Hydrogen/high. Availability is machine/account-specific.
 
-All four routes completed bounded live smoke requests on that date: Sol/high via
+All four routes completed bounded live smoke requests on 2026-11-18: Sol/high via
 Codex, Sonnet/high via Claude, Sonnet/high via agy, and Hydrogen/high via agy.
 Each returned `MODEL_USE_OK`, exit 0 and its successful terminal event/envelope,
 with token usage. They ran in temporary workspaces; no quota was deliberately
