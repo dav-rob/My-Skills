@@ -99,6 +99,17 @@ symlinked parents, and removes a leaf symlink without deleting its target.
 `exact address` and `exact-address` are separate names. Unconfigured locations
 are not scanned or removed.
 
+## Scheduled tasks
+
+[`scheduled-tasks`](skills/scheduled-tasks/SKILL.md) directs agents to the Mac’s
+Scheduled Jobs background service for reminders, recurring jobs and timed work.
+It covers choosing an executable or AI job, verifying the next run, and moving an
+existing schedule without duplicate execution.
+
+```sh
+skillstrap.sh install dav-rob/My-Skills scheduled-tasks
+```
+
 ## PR conversations (provisional)
 
 [`gh-chat`](skills/gh-chat/SKILL.md) records current best practice for ongoing
